@@ -83,6 +83,18 @@ export const MOVIES: Movie[] = [
   { id: "30", title: "Guardians of the Galaxy", genre: "Action / Sci-Fi", description: "A ragtag crew of misfits save the galaxy with attitude and a great mixtape.", moods: ["Action", "Happy"], rating: 8.0, year: 2014, trailerUrl: "https://www.youtube.com/results?search_query=Guardians+of+the+Galaxy+trailer", keywords: ["marvel", "superhero", "space", "action"] },
 ];
 
+// Hints: words a user might type that map to a mood in our catalog
+const MOOD_HINTS: Record<string, Mood> = {
+  funny: "Happy", comedy: "Happy", happy: "Happy", feelgood: "Happy",
+  sad: "Sad", emotional: "Sad", cry: "Sad", drama: "Sad",
+  calm: "Calm", chill: "Calm", relaxing: "Calm", slow: "Calm",
+  motivated: "Motivated", inspiring: "Motivated", inspirational: "Motivated", sport: "Motivated", sports: "Motivated",
+  action: "Action", fight: "Action", war: "Action", thriller: "Action", hero: "Action", superhero: "Action",
+  romance: "Romantic", romantic: "Romantic", love: "Romantic",
+  scary: "Scary", horror: "Scary", ghost: "Scary", creepy: "Scary",
+  anime: "Anime", ghibli: "Anime", japanese: "Anime",
+};
+
 // Naive similarity: shared keywords, genre overlap, and shared moods
 export function findSimilar(query: string, limit = 6): Movie[] {
   const q = query.trim().toLowerCase();
@@ -92,15 +104,21 @@ export function findSimilar(query: string, limit = 6): Movie[] {
     (m) => m.title.toLowerCase() === q || m.title.toLowerCase().includes(q),
   );
 
-  const baseKeywords = target ? target.keywords : q.split(/\s+/);
-  const baseGenres = target ? target.genre.toLowerCase().split(/[\s/]+/) : [];
-  const baseMoods = target ? target.moods : [];
+  const tokens = q.split(/\s+/).filter(Boolean);
+  const baseKeywords = target ? target.keywords : tokens;
+  const baseGenres = target ? target.genre.toLowerCase().split(/[\s/]+/) : tokens;
+  const baseMoods: Mood[] = target
+    ? target.moods
+    : Array.from(
+        new Set(tokens.map((t) => MOOD_HINTS[t]).filter(Boolean) as Mood[]),
+      );
 
   const scored = MOVIES
     .filter((m) => !target || m.id !== target.id)
     .map((m) => {
       let score = 0;
       for (const k of baseKeywords) {
+        if (!k) continue;
         if (m.keywords.some((mk) => mk.includes(k) || k.includes(mk))) score += 3;
         if (m.title.toLowerCase().includes(k)) score += 2;
         if (m.genre.toLowerCase().includes(k)) score += 2;
@@ -110,7 +128,7 @@ export function findSimilar(query: string, limit = 6): Movie[] {
         if (g.length > 2 && m.genre.toLowerCase().includes(g)) score += 2;
       }
       for (const mood of baseMoods) {
-        if (m.moods.includes(mood)) score += 2;
+        if (m.moods.includes(mood)) score += 3;
       }
       return { m, score };
     })
@@ -118,6 +136,11 @@ export function findSimilar(query: string, limit = 6): Movie[] {
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((x) => x.m);
+
+  // Fallback: if nothing matched, return top-rated movies so the user still gets ideas
+  if (scored.length === 0) {
+    return [...MOVIES].sort((a, b) => b.rating - a.rating).slice(0, limit);
+  }
 
   return scored;
 }
