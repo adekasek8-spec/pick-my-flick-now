@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Search, Shuffle, Film } from "lucide-react";
 import { MOODS, MOVIES, byMood, findSimilar, type Mood, type Movie } from "@/lib/movies";
 import { MovieCard } from "@/components/MovieCard";
@@ -21,6 +21,7 @@ function Index() {
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [picked, setPicked] = useState<Movie | null>(null);
+  const resultsRef = useRef<HTMLElement | null>(null);
 
   const recommendations = useMemo<Movie[]>(() => {
     if (submittedQuery.trim()) {
@@ -42,8 +43,13 @@ function Index() {
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmittedQuery(query);
+    const nextQuery = query.trim();
+    setSubmittedQuery(nextQuery);
+    if (nextQuery) setMood(null);
     setPicked(null);
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   };
 
   return (
@@ -84,6 +90,12 @@ function Index() {
           Find similar
         </button>
       </form>
+
+      {submittedQuery && (
+        <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-muted-foreground">
+          Showing movies similar to <span className="font-medium text-foreground">{submittedQuery}</span>.
+        </p>
+      )}
 
       {/* Moods */}
       <section className="mt-14">
@@ -142,7 +154,7 @@ function Index() {
       )}
 
       {/* Results */}
-      <section className="mt-16">
+      <section ref={resultsRef} className="scroll-mt-8 mt-16">
         {recommendations.length > 0 ? (
           <>
             <div className="mb-6 flex items-end justify-between">
