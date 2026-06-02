@@ -14,13 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      favorite_movies: {
+        Row: {
+          created_at: string
+          id: string
+          movie_id: string
+          movie_title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          movie_id: string
+          movie_title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          movie_id?: string
+          movie_title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      recommendation_history: {
+        Row: {
+          created_at: string
+          id: string
+          mood: string | null
+          query: string | null
+          recommended_movie_id: string | null
+          recommended_movie_title: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mood?: string | null
+          query?: string | null
+          recommended_movie_id?: string | null
+          recommended_movie_title?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mood?: string | null
+          query?: string | null
+          recommended_movie_id?: string | null
+          recommended_movie_title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      username_exists: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
