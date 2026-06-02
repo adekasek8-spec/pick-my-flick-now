@@ -1,17 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, Shuffle, Film, LogOut } from "lucide-react";
-import { MOODS, MOVIES, byMood, findSimilar, type Mood, type Movie } from "@/lib/movies";
+import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Search, Shuffle, Film, LogOut, Sparkles, Loader2 } from "lucide-react";
+import { MOODS, type Mood, type Movie } from "@/lib/movies";
 import { MovieCard } from "@/components/MovieCard";
 import { useAuth } from "@/hooks/useAuth";
+import { recommendMovies } from "@/lib/ai-recommend.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Mood Movie Picker — Find your next film by mood" },
-      { name: "description", content: "Discover movies, series, and anime based on your mood or a film you already love." },
+      { name: "description", content: "AI-powered movie, series and anime recommendations based on your mood or a film you already love." },
       { property: "og:title", content: "Mood Movie Picker" },
-      { property: "og:description", content: "Discover movies, series, and anime based on your mood or a film you already love." },
+      { property: "og:description", content: "AI-powered movie, series and anime recommendations based on your mood or a film you already love." },
     ],
   }),
   component: Index,
@@ -20,6 +22,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
+  const fetchAI = useServerFn(recommendMovies);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -28,35 +31,62 @@ function Index() {
   const [mood, setMood] = useState<Mood | null>(null);
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
+  const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [picked, setPicked] = useState<Movie | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const resultsRef = useRef<HTMLElement | null>(null);
 
-  const recommendations = useMemo<Movie[]>(() => {
-    if (submittedQuery.trim()) {
-      const sim = findSimilar(submittedQuery, 8);
-      if (sim.length) return sim;
+  const runRecommend = async (opts: { mood?: Mood | null; query?: string }) => {
+    setIsLoading(true);
+    setError(null);
+    setPicked(null);
+    try {
+      const res = await fetchAI({
+        data: {
+          mood: opts.mood ?? null,
+          query: opts.query ?? "",
+          count: 8,
+        },
+      });
+      setRecommendations(res.movies as unknown as Movie[]);
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Something went wrong.";
+      setError(msg);
+      setRecommendations([]);
+    } finally {
+      setIsLoading(false);
     }
-    if (mood) return byMood(mood);
-    return [];
-  }, [mood, submittedQuery]);
-
-  const pickRandom = () => {
-    const pool = recommendations.length ? recommendations : MOVIES;
-    const choice = pool[Math.floor(Math.random() * pool.length)];
-    setPicked(choice);
-    setTimeout(() => {
-      document.getElementById("pick")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 50);
   };
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const nextQuery = query.trim();
+    if (!nextQuery) return;
     setSubmittedQuery(nextQuery);
-    if (nextQuery) setMood(null);
-    setPicked(null);
+    setMood(null);
+    runRecommend({ query: nextQuery });
+  };
+
+  const onMoodClick = (m: Mood) => {
+    const active = mood === m;
+    const next = active ? null : m;
+    setMood(next);
+    setSubmittedQuery("");
+    setQuery("");
+    if (next) runRecommend({ mood: next });
+    else setRecommendations([]);
+  };
+
+  const pickRandom = () => {
+    if (!recommendations.length) return;
+    const choice = recommendations[Math.floor(Math.random() * recommendations.length)];
+    setPicked(choice);
     setTimeout(() => {
-      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("pick")?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 50);
   };
 
@@ -81,8 +111,8 @@ function Index() {
       {/* Hero */}
       <header className="text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 text-xs uppercase tracking-[0.25em] text-muted-foreground backdrop-blur">
-          <Film className="h-3.5 w-3.5 text-primary" />
-          Mood Movie Picker
+          <Sparkles className="h-3.5 w-3.5 text-primary" />
+          AI-powered · Mood Movie Picker
         </div>
         <h1 className="mt-6 font-display text-5xl leading-[0.95] tracking-wide sm:text-7xl">
           What should you
@@ -92,7 +122,7 @@ function Index() {
           </span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-          Don't know what to watch? Mood Movie Picker helps you find the perfect movie, series, or anime based on your mood. Choose your feeling or type a movie you already like, and we will suggest the best options for you.
+          Don't know what to watch? Mood Movie Picker uses AI to find the perfect movie, series, or anime based on your mood — or a film you already love.
         </p>
       </header>
 
@@ -109,15 +139,17 @@ function Index() {
         </div>
         <button
           type="submit"
-          className="inline-flex h-12 items-center justify-center rounded-xl bg-foreground px-6 text-sm font-semibold text-background transition hover:opacity-90"
+          disabled={isLoading || !query.trim()}
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-foreground px-6 text-sm font-semibold text-background transition hover:opacity-90 disabled:opacity-50"
         >
+          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           Find similar
         </button>
       </form>
 
-      {submittedQuery && (
+      {submittedQuery && !isLoading && (
         <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-muted-foreground">
-          Showing movies similar to <span className="font-medium text-foreground">{submittedQuery}</span>.
+          AI picks similar to <span className="font-medium text-foreground">{submittedQuery}</span>.
         </p>
       )}
 
@@ -132,13 +164,9 @@ function Index() {
             return (
               <button
                 key={m.name}
-                onClick={() => {
-                  setMood(active ? null : m.name);
-                  setSubmittedQuery("");
-                  setQuery("");
-                  setPicked(null);
-                }}
-                className={`group relative inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-medium transition-all duration-300 ${
+                disabled={isLoading}
+                onClick={() => onMoodClick(m.name)}
+                className={`group relative inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-medium transition-all duration-300 disabled:opacity-50 ${
                   active
                     ? "border-primary/60 bg-primary text-primary-foreground shadow-[var(--shadow-glow)]"
                     : "border-border bg-card/50 text-foreground hover:border-primary/40 hover:bg-card"
@@ -152,8 +180,23 @@ function Index() {
         </div>
       </section>
 
+      {/* Loading */}
+      {isLoading && (
+        <div className="mt-16 flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm">AI is curating your picks…</p>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && !isLoading && (
+        <div className="mx-auto mt-10 max-w-xl rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-center text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       {/* Pick for me */}
-      {recommendations.length > 0 && (
+      {!isLoading && recommendations.length > 0 && (
         <div className="mt-10 flex justify-center">
           <button
             onClick={pickRandom}
@@ -179,7 +222,7 @@ function Index() {
 
       {/* Results */}
       <section ref={resultsRef} className="scroll-mt-8 mt-16">
-        {recommendations.length > 0 ? (
+        {!isLoading && recommendations.length > 0 ? (
           <>
             <div className="mb-6 flex items-end justify-between">
               <h2 className="font-display text-3xl tracking-wide">
@@ -197,19 +240,16 @@ function Index() {
               ))}
             </div>
           </>
-        ) : submittedQuery ? (
-          <p className="text-center text-muted-foreground">
-            No matches for "{submittedQuery}". Try another title or pick a mood.
-          </p>
-        ) : (
+        ) : !isLoading && !error ? (
           <p className="text-center text-sm text-muted-foreground">
-            Choose a mood or search a movie to get started.
+            <Film className="mx-auto mb-3 h-6 w-6 opacity-50" />
+            Choose a mood or search a movie to get AI-powered picks.
           </p>
-        )}
+        ) : null}
       </section>
 
       <footer className="mt-24 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-        Made with 🎬 for movie nights
+        Made with 🎬 for movie nights · Powered by AI
       </footer>
     </main>
   );
