@@ -25,6 +25,13 @@ export function MovieCard({ movie }: { movie: Movie }) {
         {movie.description}
       </p>
 
+      {movie.reason && (
+        <div className="mt-4 rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-xs leading-relaxed text-accent">
+          <span className="font-semibold uppercase tracking-wider opacity-80">Why · </span>
+          {movie.reason}
+        </div>
+      )}
+
       <div className="mt-5 flex flex-wrap gap-2">
         {movie.moods.map((mood) => (
           <span

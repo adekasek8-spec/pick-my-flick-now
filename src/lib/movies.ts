@@ -13,11 +13,13 @@ export interface Movie {
   title: string;
   genre: string;
   description: string;
-  moods: Mood[];
+  moods: Mood[] | string[];
   rating: number;
   year: number;
   trailerUrl: string;
   keywords: string[];
+  reason?: string;
+  score?: number;
 }
 
 export const MOODS: { name: Mood; emoji: string }[] = [
