@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
-import { Search, Shuffle, Film } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Search, Shuffle, Film, LogOut } from "lucide-react";
 import { MOODS, MOVIES, byMood, findSimilar, type Mood, type Movie } from "@/lib/movies";
 import { MovieCard } from "@/components/MovieCard";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -17,6 +18,13 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const navigate = useNavigate();
+  const { user, loading, signOut } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) navigate({ to: "/login" });
+  }, [user, loading, navigate]);
+
   const [mood, setMood] = useState<Mood | null>(null);
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
@@ -53,7 +61,23 @@ function Index() {
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-5 pb-24 pt-12 sm:pt-20">
+    <main className="mx-auto max-w-6xl px-5 pb-24 pt-8 sm:pt-12">
+      {/* User bar */}
+      {user && (
+        <div className="mb-6 flex items-center justify-end gap-3 text-sm">
+          <span className="text-muted-foreground">
+            Hi, <span className="font-medium text-foreground">{user.user_metadata?.full_name || user.email}</span>
+          </span>
+          <button
+            onClick={() => signOut()}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/50 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign out
+          </button>
+        </div>
+      )}
+
       {/* Hero */}
       <header className="text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 text-xs uppercase tracking-[0.25em] text-muted-foreground backdrop-blur">
