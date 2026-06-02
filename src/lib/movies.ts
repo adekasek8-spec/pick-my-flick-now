@@ -13,7 +13,7 @@ export interface Movie {
   title: string;
   genre: string;
   description: string;
-  moods: Mood[] | string[];
+  moods: Mood[];
   rating: number;
   year: number;
   trailerUrl: string;
