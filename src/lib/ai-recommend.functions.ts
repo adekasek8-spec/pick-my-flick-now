@@ -2,20 +2,25 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const MOODS = [
-  "Happy",
-  "Sad",
-  "Calm",
-  "Motivated",
-  "Action",
-  "Romantic",
-  "Scary",
-  "Anime",
+  "Happy", "Sad", "Calm", "Motivated",
+  "Action", "Romantic", "Scary", "Anime",
 ] as const;
+
+const PreferencesSchema = z.object({
+  favoriteGenres: z.array(z.string()).max(20).default([]),
+  contentType: z.enum(["movie", "series", "anime", "any"]).default("any"),
+  favoriteMood: z.string().max(40).default("any"),
+  language: z.string().max(40).default("any"),
+  ageCategory: z.enum(["kids", "teens", "adults", "any"]).default("any"),
+});
 
 const InputSchema = z.object({
   mood: z.enum(MOODS).nullable().optional(),
   query: z.string().max(200).optional(),
   count: z.number().min(1).max(12).default(8),
+  preferences: PreferencesSchema.optional(),
+  seed: z.number().optional(),
+  excludeTitles: z.array(z.string()).max(50).optional(),
 });
 
 export interface AIMovie {
@@ -28,6 +33,8 @@ export interface AIMovie {
   year: number;
   trailerUrl: string;
   keywords: string[];
+  reason: string;
+  score: number;
 }
 
 export const recommendMovies = createServerFn({ method: "POST" })
@@ -36,15 +43,93 @@ export const recommendMovies = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { mood, query, count } = data;
+    const { mood, query, count, preferences, excludeTitles } = data;
+    const prefs = preferences ?? {
+      favoriteGenres: [],
+      contentType: "any" as const,
+      favoriteMood: "any",
+      language: "any",
+      ageCategory: "any" as const,
+    };
 
-    const userPrompt = query?.trim()
-      ? `The user loves the movie / show: "${query.trim()}". Suggest ${count} similar movies, series, or anime they would enjoy.`
-      : mood
-        ? `The user is in a "${mood}" mood. Suggest ${count} movies, series, or anime that fit this mood perfectly.`
-        : `Suggest ${count} highly-rated, diverse movies, series, or anime.`;
+    // Build a varying instruction so the model doesn't repeat itself
+    const variationHints = [
+      "Mix well-known classics with hidden gems.",
+      "Lean toward modern releases (last 10 years).",
+      "Include at least one international / non-English title.",
+      "Include at least one critically-acclaimed older film.",
+      "Mix mainstream hits with cult favorites.",
+      "Favor titles from different decades and countries.",
+    ];
+    const variation = variationHints[Math.floor(Math.random() * variationHints.length)];
 
-    const systemPrompt = `You are a world-class movie & anime curator. Recommend a diverse mix (different decades, countries, genres). Use real titles only — never invent. Be accurate with year, genre, and IMDb-style rating.`;
+    const prefsLines: string[] = [];
+    if (prefs.favoriteGenres.length) prefsLines.push(`Favorite genres: ${prefs.favoriteGenres.join(", ")}`);
+    if (prefs.contentType !== "any") prefsLines.push(`Prefers: ${prefs.contentType}`);
+    if (prefs.favoriteMood !== "any") prefsLines.push(`Default mood: ${prefs.favoriteMood}`);
+    if (prefs.language !== "any") prefsLines.push(`Preferred language: ${prefs.language}`);
+    if (prefs.ageCategory !== "any") prefsLines.push(`Age category: ${prefs.ageCategory}`);
+    const prefsBlock = prefsLines.length ? `\n\nUser preferences:\n- ${prefsLines.join("\n- ")}` : "";
+
+    const excludeBlock = excludeTitles?.length
+      ? `\n\nDo NOT suggest these (already shown): ${excludeTitles.slice(0, 30).join(", ")}.`
+      : "";
+
+    let userPrompt: string;
+    if (query?.trim()) {
+      userPrompt = `The user typed: "${query.trim()}".
+
+First, internally identify this title and analyze its tags:
+- Genre, mood, atmosphere
+- Story theme & main style
+- Target audience
+
+Then recommend ${count} movies/series/anime that genuinely match those tags. For example:
+- "Spider-Man" → superhero, action, adventure, Marvel-style
+- "Hachiko" → emotional, sad, family drama, animal bond
+- "Interstellar" → sci-fi, space, mystery, emotional adventure
+- "The Conjuring" → horror, supernatural, dark
+- "Your Name" → romantic, emotional, anime, fantasy
+
+Rule: results MUST share genre/mood/theme with the typed title — not generic top movies.${prefsBlock}${excludeBlock}
+
+Variation hint for this request: ${variation}`;
+    } else if (mood) {
+      const moodGuide: Record<string, string> = {
+        Happy: "comedy, adventure, light feel-good movies",
+        Sad: "emotional dramas, tearjerkers, character stories",
+        Calm: "peaceful, slow, beautifully shot films",
+        Motivated: "inspirational, sports, success and underdog stories",
+        Action: "superhero, fights, chases, adventure",
+        Romantic: "romance, love stories, romantic dramas, anime romance",
+        Scary: "horror, supernatural, psychological thrillers",
+        Anime: "anime movies and series across genres",
+      };
+      userPrompt = `Recommend ${count} titles for someone in a "${mood}" mood.
+Focus on: ${moodGuide[mood] ?? mood}.${prefsBlock}${excludeBlock}
+
+Variation hint: ${variation}`;
+    } else {
+      userPrompt = `Recommend ${count} diverse, highly-rated titles.${prefsBlock}${excludeBlock}\n\nVariation hint: ${variation}`;
+    }
+
+    const systemPrompt = `You are a world-class film & anime curator with encyclopedic knowledge.
+
+For every recommendation you MUST:
+1. Pick REAL existing titles only — never invent.
+2. Match the user's request on genre + mood + theme + style.
+3. Respect their preferences (genres, content type, language, age) — they boost the score.
+4. Vary your picks: different decades, countries, and tones.
+5. Provide an honest, specific "reason" sentence explaining WHY this fits the user.
+6. Score each recommendation 0-10 based on how strong the match is.
+
+Scoring guidance (internal):
+- Same genre as input: +3
+- Same mood as input: +3
+- Same theme/atmosphere: +2
+- Matches user's contentType: +1
+- Matches user's favorite genres or language: +2
+Higher score = appears first.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -56,6 +141,8 @@ export const recommendMovies = createServerFn({ method: "POST" })
         },
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
+          temperature: 0.95,
+          top_p: 0.95,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
@@ -65,7 +152,7 @@ export const recommendMovies = createServerFn({ method: "POST" })
               type: "function",
               function: {
                 name: "return_recommendations",
-                description: "Return a list of movie recommendations.",
+                description: "Return scored movie recommendations with reasons.",
                 parameters: {
                   type: "object",
                   properties: {
@@ -75,38 +162,27 @@ export const recommendMovies = createServerFn({ method: "POST" })
                         type: "object",
                         properties: {
                           title: { type: "string" },
-                          genre: {
-                            type: "string",
-                            description: "e.g. 'Sci-Fi / Drama'",
-                          },
-                          description: {
-                            type: "string",
-                            description: "One sentence, vivid, max 140 chars.",
-                          },
+                          genre: { type: "string", description: "e.g. 'Sci-Fi / Drama'" },
+                          description: { type: "string", description: "One vivid sentence, max 140 chars." },
                           moods: {
                             type: "array",
                             items: { type: "string", enum: MOODS as unknown as string[] },
-                            description: "1-3 moods that best match.",
+                            description: "1-3 matching moods.",
                           },
-                          rating: {
-                            type: "number",
-                            description: "IMDb-style rating 0-10",
-                          },
+                          rating: { type: "number", description: "IMDb-style 0-10" },
                           year: { type: "number" },
                           keywords: {
                             type: "array",
                             items: { type: "string" },
+                            description: "5-8 tags: genre, mood, theme, style.",
                           },
+                          reason: {
+                            type: "string",
+                            description: "One short sentence explaining why it's recommended for THIS user. e.g. 'Recommended because you like superhero action movies.'",
+                          },
+                          score: { type: "number", description: "0-10 match strength." },
                         },
-                        required: [
-                          "title",
-                          "genre",
-                          "description",
-                          "moods",
-                          "rating",
-                          "year",
-                          "keywords",
-                        ],
+                        required: ["title", "genre", "description", "moods", "rating", "year", "keywords", "reason", "score"],
                         additionalProperties: false,
                       },
                     },
@@ -117,29 +193,21 @@ export const recommendMovies = createServerFn({ method: "POST" })
               },
             },
           ],
-          tool_choice: {
-            type: "function",
-            function: { name: "return_recommendations" },
-          },
+          tool_choice: { type: "function", function: { name: "return_recommendations" } },
         }),
       },
     );
 
     if (!response.ok) {
-      if (response.status === 429) {
-        throw new Error("Too many requests right now. Please try again in a moment.");
-      }
-      if (response.status === 402) {
-        throw new Error("AI usage limit reached. Please add credits to your Lovable workspace.");
-      }
+      if (response.status === 429) throw new Error("Too many requests right now. Please try again in a moment.");
+      if (response.status === 402) throw new Error("AI usage limit reached. Please add credits to your Lovable workspace.");
       const text = await response.text();
       console.error("AI gateway error:", response.status, text);
       throw new Error("AI recommendation failed. Please try again.");
     }
 
     const payload = await response.json();
-    const toolCall = payload?.choices?.[0]?.message?.tool_calls?.[0];
-    const argsRaw = toolCall?.function?.arguments;
+    const argsRaw = payload?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     if (!argsRaw) throw new Error("AI returned no recommendations.");
 
     let parsed: { movies: Omit<AIMovie, "id" | "trailerUrl">[] };
@@ -149,19 +217,21 @@ export const recommendMovies = createServerFn({ method: "POST" })
       throw new Error("AI returned invalid data.");
     }
 
-    const movies: AIMovie[] = (parsed.movies ?? []).map((m, i) => ({
-      id: `ai-${Date.now()}-${i}`,
-      title: m.title,
-      genre: m.genre,
-      description: m.description,
-      moods: Array.isArray(m.moods) ? m.moods : [],
-      rating: Number(m.rating) || 0,
-      year: Number(m.year) || 0,
-      keywords: Array.isArray(m.keywords) ? m.keywords : [],
-      trailerUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(
-        `${m.title} ${m.year ?? ""} trailer`,
-      )}`,
-    }));
+    const movies: AIMovie[] = (parsed.movies ?? [])
+      .map((m, i) => ({
+        id: `ai-${Date.now()}-${i}`,
+        title: m.title,
+        genre: m.genre,
+        description: m.description,
+        moods: Array.isArray(m.moods) ? m.moods : [],
+        rating: Number(m.rating) || 0,
+        year: Number(m.year) || 0,
+        keywords: Array.isArray(m.keywords) ? m.keywords : [],
+        reason: m.reason || "",
+        score: Number(m.score) || 0,
+        trailerUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${m.title} ${m.year ?? ""} trailer`)}`,
+      }))
+      .sort((a, b) => b.score - a.score);
 
     return { movies };
   });

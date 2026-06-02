@@ -18,6 +18,8 @@ export interface Movie {
   year: number;
   trailerUrl: string;
   keywords: string[];
+  reason?: string;
+  score?: number;
 }
 
 export const MOODS: { name: Mood; emoji: string }[] = [

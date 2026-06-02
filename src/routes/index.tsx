@@ -1,19 +1,21 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Search, Shuffle, Film, LogOut, Sparkles, Loader2 } from "lucide-react";
+import { Search, Shuffle, Film, LogOut, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { MOODS, type Mood, type Movie } from "@/lib/movies";
 import { MovieCard } from "@/components/MovieCard";
+import { PreferencesDialog } from "@/components/PreferencesDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { recommendMovies } from "@/lib/ai-recommend.functions";
+import { loadPreferences, type UserPreferences } from "@/lib/preferences";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Mood Movie Picker — Find your next film by mood" },
-      { name: "description", content: "AI-powered movie, series and anime recommendations based on your mood or a film you already love." },
+      { title: "Mood Movie Picker — AI-powered film recommendations" },
+      { name: "description", content: "Personalized AI movie, series and anime recommendations based on your mood, taste, and a film you already love." },
       { property: "og:title", content: "Mood Movie Picker" },
-      { property: "og:description", content: "AI-powered movie, series and anime recommendations based on your mood or a film you already love." },
+      { property: "og:description", content: "Personalized AI movie, series and anime recommendations based on your mood, taste, and a film you already love." },
     ],
   }),
   component: Index,
@@ -35,9 +37,13 @@ function Index() {
   const [picked, setPicked] = useState<Movie | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [prefs, setPrefs] = useState<UserPreferences>(() => loadPreferences());
+  const [shownTitles, setShownTitles] = useState<string[]>([]);
   const resultsRef = useRef<HTMLElement | null>(null);
 
-  const runRecommend = async (opts: { mood?: Mood | null; query?: string }) => {
+  const runRecommend = async (
+    opts: { mood?: Mood | null; query?: string; refresh?: boolean },
+  ) => {
     setIsLoading(true);
     setError(null);
     setPicked(null);
@@ -47,16 +53,24 @@ function Index() {
           mood: opts.mood ?? null,
           query: opts.query ?? "",
           count: 8,
+          preferences: prefs,
+          seed: Math.floor(Math.random() * 1_000_000),
+          excludeTitles: opts.refresh ? shownTitles : [],
         },
       });
-      setRecommendations(res.movies as unknown as Movie[]);
+      const movies = res.movies as unknown as Movie[];
+      setRecommendations(movies);
+      setShownTitles((prev) => {
+        const next = opts.refresh ? [...prev, ...movies.map((m) => m.title)] : movies.map((m) => m.title);
+        return Array.from(new Set(next)).slice(-40);
+      });
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 50);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Something went wrong.";
       setError(msg);
-      setRecommendations([]);
+      if (!opts.refresh) setRecommendations([]);
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +82,7 @@ function Index() {
     if (!nextQuery) return;
     setSubmittedQuery(nextQuery);
     setMood(null);
+    setShownTitles([]);
     runRecommend({ query: nextQuery });
   };
 
@@ -77,8 +92,17 @@ function Index() {
     setMood(next);
     setSubmittedQuery("");
     setQuery("");
+    setShownTitles([]);
     if (next) runRecommend({ mood: next });
     else setRecommendations([]);
+  };
+
+  const refresh = () => {
+    runRecommend({
+      mood: mood ?? undefined,
+      query: submittedQuery || undefined,
+      refresh: true,
+    });
   };
 
   const pickRandom = () => {
@@ -94,10 +118,11 @@ function Index() {
     <main className="mx-auto max-w-6xl px-5 pb-24 pt-8 sm:pt-12">
       {/* User bar */}
       {user && (
-        <div className="mb-6 flex items-center justify-end gap-3 text-sm">
+        <div className="mb-6 flex flex-wrap items-center justify-end gap-3 text-sm">
           <span className="text-muted-foreground">
             Hi, <span className="font-medium text-foreground">{user.user_metadata?.full_name || user.email}</span>
           </span>
+          <PreferencesDialog onSaved={setPrefs} />
           <button
             onClick={() => signOut()}
             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/50 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
@@ -122,7 +147,7 @@ function Index() {
           </span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-          Don't know what to watch? Mood Movie Picker uses AI to find the perfect movie, series, or anime based on your mood — or a film you already love.
+          Type a movie you love or pick a mood — AI analyzes its genre, theme, and atmosphere to give you fresh, personal picks every time.
         </p>
       </header>
 
@@ -195,15 +220,22 @@ function Index() {
         </div>
       )}
 
-      {/* Pick for me */}
+      {/* Actions */}
       {!isLoading && recommendations.length > 0 && (
-        <div className="mt-10 flex justify-center">
+        <div className="mt-10 flex flex-wrap justify-center gap-3">
           <button
             onClick={pickRandom}
             className="group inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-6 py-3 text-sm font-semibold text-accent transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-[var(--shadow-glow)]"
           >
             <Shuffle className="h-4 w-4 transition-transform group-hover:rotate-180" />
             Pick for me
+          </button>
+          <button
+            onClick={refresh}
+            className="group inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-6 py-3 text-sm font-semibold text-primary transition-all hover:bg-primary hover:text-primary-foreground hover:shadow-[var(--shadow-glow)]"
+          >
+            <RefreshCw className="h-4 w-4 transition-transform group-hover:rotate-180" />
+            More like this
           </button>
         </div>
       )}
