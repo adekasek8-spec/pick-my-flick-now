@@ -37,6 +37,24 @@ export interface AIMovie {
   score: number;
 }
 
+type MovieCandidate = Omit<AIMovie, "id" | "trailerUrl">;
+
+function fallbackRecommendations(mood: string | null | undefined, count: number): MovieCandidate[] {
+  const sad: MovieCandidate[] = [
+    { title: "Manchester by the Sea", genre: "Drama", description: "A guarded janitor returns home to face grief, family, and impossible responsibility.", moods: ["Sad"], rating: 7.8, year: 2016, keywords: ["grief", "family", "drama", "loss", "quiet"], reason: "Recommended because it is a deeply emotional character drama.", score: 9.4 },
+    { title: "My Life Without Me", genre: "Drama", description: "A young woman quietly reshapes her life after receiving devastating news.", moods: ["Sad", "Calm"], rating: 7.4, year: 2003, keywords: ["tearjerker", "illness", "family", "intimate", "bittersweet"], reason: "Recommended for a tender, sad, reflective mood.", score: 8.8 },
+    { title: "Tokyo Story", genre: "Drama", description: "An elderly couple visits their grown children in a quietly heartbreaking family portrait.", moods: ["Sad", "Calm"], rating: 8.1, year: 1953, keywords: ["family", "aging", "classic", "melancholy", "Japanese"], reason: "Recommended because it is one of cinema’s most moving family dramas.", score: 8.7 },
+    { title: "Life as a House", genre: "Drama", description: "A father and son rebuild a home while confronting old wounds.", moods: ["Sad", "Motivated"], rating: 7.4, year: 2001, keywords: ["family", "healing", "father-son", "emotional", "redemption"], reason: "Recommended for emotional drama with a hopeful edge.", score: 8.3 },
+  ];
+  const general: MovieCandidate[] = [
+    { title: "Spider-Man: Into the Spider-Verse", genre: "Animation / Action", description: "A teen hero finds courage across a dazzling multiverse adventure.", moods: ["Happy", "Action"], rating: 8.4, year: 2018, keywords: ["superhero", "animation", "coming-of-age", "fun", "action"], reason: "Recommended as an energetic, crowd-pleasing pick.", score: 8.6 },
+    { title: "Interstellar", genre: "Sci-Fi / Drama", description: "Explorers cross space and time in a grand story about survival and love.", moods: ["Motivated", "Sad"], rating: 8.7, year: 2014, keywords: ["space", "epic", "family", "sci-fi", "emotional"], reason: "Recommended for a big emotional adventure.", score: 8.5 },
+    { title: "Your Name", genre: "Anime / Romance", description: "Two teenagers mysteriously connected across distance search for each other.", moods: ["Romantic", "Anime"], rating: 8.4, year: 2016, keywords: ["anime", "romance", "fantasy", "emotional", "beautiful"], reason: "Recommended for romance, wonder, and emotion.", score: 8.4 },
+    { title: "The Grand Budapest Hotel", genre: "Comedy / Adventure", description: "A legendary concierge races through a stylish caper full of charm and chaos.", moods: ["Happy", "Calm"], rating: 8.1, year: 2014, keywords: ["comedy", "stylish", "adventure", "witty", "colorful"], reason: "Recommended for a smart, visually rich mood lift.", score: 8.2 },
+  ];
+  return (mood === "Sad" ? sad : general).slice(0, count);
+}
+
 export const recommendMovies = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }): Promise<{ movies: AIMovie[] }> => {
@@ -207,8 +225,16 @@ Higher score = appears first.`;
     }
 
     const payload = await response.json();
-    const argsRaw = payload?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-    if (!argsRaw) throw new Error("AI returned no recommendations.");
+    const message = payload?.choices?.[0]?.message;
+    const argsRaw = message?.tool_calls?.[0]?.function?.arguments ?? message?.content;
+    if (!argsRaw) {
+      console.warn("AI returned no recommendation payload; using curated fallback.");
+      return { movies: fallbackRecommendations(mood, count).map((m, i) => ({
+        ...m,
+        id: `fallback-${Date.now()}-${i}`,
+        trailerUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${m.title} ${m.year} trailer`)}`,
+      })) };
+    }
 
     let parsed: { movies: Omit<AIMovie, "id" | "trailerUrl">[] };
     try {
