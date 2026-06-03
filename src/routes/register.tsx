@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -37,6 +39,7 @@ const schema = z
 function RegisterPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const { t } = useI18n();
   const [form, setForm] = useState({ fullName: "", username: "", email: "", password: "", confirm: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -95,15 +98,18 @@ function RegisterPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-5 py-12">
+    <main className="relative flex min-h-screen items-center justify-center px-5 py-12">
+      <div className="absolute right-5 top-5">
+        <LanguageSelector variant="light" />
+      </div>
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 text-xs uppercase tracking-[0.25em] text-muted-foreground backdrop-blur">
             <Film className="h-3.5 w-3.5 text-primary" />
-            Mood Movie Picker
+            {t("brand")}
           </div>
-          <h1 className="mt-6 font-display text-5xl tracking-wide">Create account</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Start your personal cinema journey.</p>
+          <h1 className="mt-6 font-display text-5xl tracking-wide">{t("createAccount")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{t("registerSubtitle")}</p>
         </div>
 
         <form
@@ -111,20 +117,20 @@ function RegisterPage() {
           className="rounded-2xl border border-border bg-card/40 p-8 shadow-[var(--shadow-card)] backdrop-blur-xl"
         >
           <div className="space-y-4">
-            <Field icon={<User className="h-4 w-4" />} label="Full name" error={errors.fullName}>
+            <Field icon={<User className="h-4 w-4" />} label={t("fullName")} error={errors.fullName}>
               <input value={form.fullName} onChange={set("fullName")} placeholder="Jane Doe" className={inputCls} />
             </Field>
-            <Field icon={<AtSign className="h-4 w-4" />} label="Username" error={errors.username}>
+            <Field icon={<AtSign className="h-4 w-4" />} label={t("username")} error={errors.username}>
               <input value={form.username} onChange={set("username")} placeholder="cinemafan" className={inputCls} />
             </Field>
-            <Field icon={<Mail className="h-4 w-4" />} label="Email" error={errors.email}>
+            <Field icon={<Mail className="h-4 w-4" />} label={t("email")} error={errors.email}>
               <input type="email" value={form.email} onChange={set("email")} placeholder="you@example.com" className={inputCls} />
             </Field>
-            <Field icon={<Lock className="h-4 w-4" />} label="Password" error={errors.password}>
-              <input type="password" value={form.password} onChange={set("password")} placeholder="At least 6 characters" className={inputCls} />
+            <Field icon={<Lock className="h-4 w-4" />} label={t("password")} error={errors.password}>
+              <input type="password" value={form.password} onChange={set("password")} placeholder="••••••••" className={inputCls} />
             </Field>
-            <Field icon={<Lock className="h-4 w-4" />} label="Confirm password" error={errors.confirm}>
-              <input type="password" value={form.confirm} onChange={set("confirm")} placeholder="Repeat password" className={inputCls} />
+            <Field icon={<Lock className="h-4 w-4" />} label={t("confirmPassword")} error={errors.confirm}>
+              <input type="password" value={form.confirm} onChange={set("confirm")} placeholder="••••••••" className={inputCls} />
             </Field>
           </div>
 
@@ -134,13 +140,13 @@ function RegisterPage() {
             className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent text-sm font-semibold text-primary-foreground transition hover:shadow-[var(--shadow-glow)] disabled:opacity-60"
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Create account
+            {t("createAccount")}
           </button>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
+            {t("haveAccount")}{" "}
             <Link to="/login" className="font-semibold text-primary hover:underline">
-              Sign in
+              {t("signIn")}
             </Link>
           </p>
         </form>
