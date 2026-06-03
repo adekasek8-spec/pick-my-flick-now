@@ -59,7 +59,7 @@
   --secondary-foreground: oklch(0.2 0.01 270);
   --muted: oklch(0.965 0.005 270);
   --muted-foreground: oklch(0.48 0.015 265);
-  /* Accent = friendly indigo for the school-camp vibe (used sparingly) */
+  /* Accent = friendly indigo (used sparingly) */
   --accent: oklch(0.55 0.21 265);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.6 0.22 27);
