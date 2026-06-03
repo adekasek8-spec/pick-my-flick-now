@@ -14,6 +14,21 @@ export interface PosterResult {
 
 const cache = new Map<string, PosterResult>();
 
+function tmdbAuth(apiKey: string): { headers?: HeadersInit; apiKeyParam?: string } {
+  const key = apiKey.replace(/^Bearer\s+/i, "").trim();
+  // TMDB v3 API keys are 32-char hex strings. The newer docs commonly show
+  // v4 Read Access Tokens, which must be sent as Authorization: Bearer <token>.
+  if (/^[a-f0-9]{32}$/i.test(key)) return { apiKeyParam: key };
+  return { headers: { Authorization: `Bearer ${key}`, accept: "application/json" } };
+}
+
+async function fetchTmdb(path: string, apiKey: string, params: URLSearchParams) {
+  const auth = tmdbAuth(apiKey);
+  if (auth.apiKeyParam) params.set("api_key", auth.apiKeyParam);
+  const url = `https://api.themoviedb.org/3/${path}?${params.toString()}`;
+  return fetch(url, { headers: auth.headers });
+}
+
 // Strip non-Latin chars, parenthetical/bracketed asides, and trailing junk
 // the AI sometimes appends (e.g. "Paterson碎", "Sweet Bean (An)").
 function cleanTitle(raw: string): string {
@@ -32,10 +47,16 @@ async function fetchBestImage(
   id: number,
   apiKey: string,
 ): Promise<{ poster: string | null; backdrop: string | null }> {
-  const url = `https://api.themoviedb.org/3/${endpoint}/${id}/images?api_key=${apiKey}&include_image_language=en,null`;
   try {
-    const res = await fetch(url);
-    if (!res.ok) return { poster: null, backdrop: null };
+    const res = await fetchTmdb(
+      `${endpoint}/${id}/images`,
+      apiKey,
+      new URLSearchParams({ include_image_language: "en,null" }),
+    );
+    if (!res.ok) {
+      console.error(`[poster] TMDB ${endpoint}/${id}/images ${res.status}`);
+      return { poster: null, backdrop: null };
+    }
     const data = (await res.json()) as {
       posters?: Array<{ file_path: string; vote_average?: number; iso_639_1?: string | null }>;
       backdrops?: Array<{ file_path: string; vote_average?: number; iso_639_1?: string | null }>;
@@ -71,7 +92,6 @@ async function searchTmdb(
   apiKey: string,
 ): Promise<PosterResult | null> {
   const params = new URLSearchParams({
-    api_key: apiKey,
     query: title,
     include_adult: "false",
     language: "en-US",
@@ -79,8 +99,7 @@ async function searchTmdb(
   if (year && endpoint === "movie") params.set("year", String(year));
   if (year && endpoint === "tv") params.set("first_air_date_year", String(year));
 
-  const url = `https://api.themoviedb.org/3/search/${endpoint}?${params.toString()}`;
-  const res = await fetch(url);
+  const res = await fetchTmdb(`search/${endpoint}`, apiKey, params);
   if (!res.ok) {
     console.error(`[poster] TMDB ${endpoint} ${res.status} for "${title}"`);
     return null;
@@ -164,7 +183,7 @@ export const getPoster = createServerFn({ method: "POST" })
       if (!final.posterUrl) {
         console.warn(`[poster] no poster for "${data.title}" (cleaned="${cleaned}", year=${data.year ?? "?"})`);
       }
-      cache.set(key, final);
+      if (final.posterUrl) cache.set(key, final);
       return final;
     } catch (err) {
       console.error("[poster] lookup failed:", err);

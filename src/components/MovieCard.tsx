@@ -27,6 +27,7 @@ export function MovieCard({ movie }: { movie: Movie }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    setLoaded(false);
     if (posterCache.has(cacheKey)) {
       setPoster(posterCache.get(cacheKey) ?? null);
       return;
@@ -35,12 +36,11 @@ export function MovieCard({ movie }: { movie: Movie }) {
     fetchPoster({ data: { title: movie.title, year: movie.year } })
       .then((res) => {
         if (cancelled) return;
-        posterCache.set(cacheKey, res.posterUrl);
+        if (res.posterUrl) posterCache.set(cacheKey, res.posterUrl);
         setPoster(res.posterUrl);
       })
       .catch(() => {
         if (!cancelled) {
-          posterCache.set(cacheKey, null);
           setPoster(null);
         }
       });
