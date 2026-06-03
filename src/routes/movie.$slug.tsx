@@ -117,70 +117,70 @@ function MoviePage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#070709] text-zinc-100">
+    <main className="min-h-screen bg-background text-foreground">
       {/* Hero banner */}
       <div className="relative">
         <div
-          className="absolute inset-0 h-[520px] bg-cover bg-center opacity-40 blur-2xl"
+          className="absolute inset-0 h-[520px] bg-cover bg-center opacity-20 blur-2xl"
           style={{ backgroundImage: `url(${heroBg})` }}
         />
-        <div className="absolute inset-0 h-[520px] bg-gradient-to-b from-black/40 via-[#070709]/85 to-[#070709]" />
+        <div className="absolute inset-0 h-[520px] bg-gradient-to-b from-background/40 via-background/85 to-background" />
 
-        <div className="relative mx-auto max-w-6xl px-5 pt-8">
+        <div className="relative mx-auto max-w-6xl px-5 pt-6">
           <div className="flex items-center justify-between gap-3">
             <Link
               to="/"
-              className="inline-flex items-center gap-2 text-sm text-zinc-300 transition hover:text-white"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
               {t("back")}
             </Link>
-            <LanguageSelector />
+            <LanguageSelector variant="light" />
           </div>
 
-          <div className="mt-8 grid gap-8 md:grid-cols-[260px_1fr] md:gap-10">
+          <div className="mt-10 grid gap-8 md:grid-cols-[260px_1fr] md:gap-10">
             <div className="mx-auto w-44 md:mx-0 md:w-full">
               <img
                 src={poster}
                 alt={`${title} poster`}
-                className="aspect-[2/3] w-full rounded-2xl border border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.6)]"
+                className="aspect-[2/3] w-full rounded-2xl border border-border shadow-[var(--shadow-card)]"
               />
             </div>
 
             <div className="flex flex-col">
-              <p className="text-xs uppercase tracking-[0.3em] text-rose-300">
+              <p className="text-xs uppercase tracking-[0.3em] text-accent">
                 {details?.genre ?? base?.genre ?? "Film"}
                 {year ? ` · ${year}` : ""}
               </p>
-              <h1 className="mt-3 font-display text-5xl leading-[0.95] text-white sm:text-6xl">
+              <h1 className="mt-3 font-display text-5xl leading-[0.95] text-foreground sm:text-6xl">
                 {title}
               </h1>
 
-              <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-zinc-300">
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-3 py-1 font-semibold text-amber-300">
+              <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-foreground">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-3 py-1 font-semibold text-amber-700">
                   <Star className="h-3.5 w-3.5 fill-current" />
                   {(details?.rating ?? base?.rating ?? 0).toFixed(1)}
                 </span>
                 {details?.runtime && (
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                  <span className="rounded-full border border-border bg-card px-3 py-1 text-muted-foreground">
                     {details.runtime}
                   </span>
                 )}
                 {details?.language && (
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                  <span className="rounded-full border border-border bg-card px-3 py-1 text-muted-foreground">
                     {details.language}
                   </span>
                 )}
               </div>
 
               {base?.reason && (
-                <div className="mt-5 max-w-2xl border-l-2 border-rose-400/70 bg-rose-400/5 px-4 py-3 text-sm text-zinc-200">
-                  <span className="font-semibold uppercase tracking-wider text-rose-300">{t("why")} · </span>
+                <div className="mt-5 max-w-2xl border-l-2 border-accent bg-accent/5 px-4 py-3 text-sm text-foreground">
+                  <span className="font-semibold uppercase tracking-wider text-accent">{t("why")} · </span>
                   {base.reason}
                 </div>
               )}
 
-              <p className="mt-6 max-w-2xl text-base leading-relaxed text-zinc-300">
+              <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground">
                 {details?.plot ?? base?.description ?? t("loadingDetails")}
               </p>
 
@@ -191,7 +191,7 @@ function MoviePage() {
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-violet-500 px-6 py-3 text-sm font-bold text-white shadow-[0_10px_30px_rgba(244,63,94,0.4)] transition hover:shadow-[0_15px_40px_rgba(244,63,94,0.55)]"
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
                 >
                   <Play className="h-4 w-4 fill-current" />
                   {t("watchTrailer")}
@@ -200,8 +200,8 @@ function MoviePage() {
                   onClick={handleSave}
                   className={`inline-flex items-center gap-2 rounded-full border px-6 py-3 text-sm font-semibold transition ${
                     saved
-                      ? "border-emerald-400/60 bg-emerald-400/10 text-emerald-300"
-                      : "border-white/15 bg-white/5 text-white hover:border-white/40"
+                      ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-700"
+                      : "border-border bg-card text-foreground hover:bg-secondary"
                   }`}
                 >
                   {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
@@ -215,14 +215,14 @@ function MoviePage() {
 
       <div className="mx-auto max-w-6xl px-5 pb-24">
         {loading && (
-          <div className="mt-12 flex items-center justify-center gap-2 text-zinc-400">
+          <div className="mt-12 flex items-center justify-center gap-2 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
             <span className="text-sm">{t("loadingDetails")}</span>
           </div>
         )}
 
         {error && !loading && (
-          <div className="mx-auto mt-10 max-w-xl rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-center text-sm text-rose-200">
+          <div className="mx-auto mt-10 max-w-xl rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-center text-sm text-destructive">
             {error}
           </div>
         )}
@@ -231,8 +231,8 @@ function MoviePage() {
           <>
             {/* Trailer embed */}
             <section className="mt-14">
-              <h2 className="font-display text-2xl tracking-wide text-white">{t("trailer")}</h2>
-              <div className="mt-4 aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_15px_50px_rgba(0,0,0,0.6)]">
+              <h2 className="font-display text-2xl tracking-tight text-foreground">{t("trailer")}</h2>
+              <div className="mt-4 aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black shadow-[var(--shadow-card)]">
                 <iframe
                   src={youtubeEmbedSearch}
                   title={`${title} trailer`}
@@ -246,39 +246,39 @@ function MoviePage() {
             {/* Cast + meta */}
             <section className="mt-14 grid gap-10 md:grid-cols-2">
               <div>
-                <h2 className="font-display text-2xl tracking-wide text-white">{t("castCrew")}</h2>
+                <h2 className="font-display text-2xl tracking-tight text-foreground">{t("castCrew")}</h2>
                 <dl className="mt-4 space-y-2 text-sm">
                   <div className="flex gap-2">
-                    <dt className="w-24 text-zinc-500">{t("director")}</dt>
-                    <dd className="text-zinc-200">{details.director}</dd>
+                    <dt className="w-24 text-muted-foreground">{t("director")}</dt>
+                    <dd className="text-foreground">{details.director}</dd>
                   </div>
                   <div className="flex gap-2">
-                    <dt className="w-24 text-zinc-500">{t("starring")}</dt>
-                    <dd className="text-zinc-200">{details.actors.join(", ")}</dd>
+                    <dt className="w-24 text-muted-foreground">{t("starring")}</dt>
+                    <dd className="text-foreground">{details.actors.join(", ")}</dd>
                   </div>
                   <div className="flex gap-2">
-                    <dt className="w-24 text-zinc-500">{t("genre")}</dt>
-                    <dd className="text-zinc-200">{details.genre}</dd>
+                    <dt className="w-24 text-muted-foreground">{t("genre")}</dt>
+                    <dd className="text-foreground">{details.genre}</dd>
                   </div>
                 </dl>
               </div>
 
               <div>
-                <h2 className="font-display text-2xl tracking-wide text-white">{t("moodTags")}</h2>
+                <h2 className="font-display text-2xl tracking-tight text-foreground">{t("moodTags")}</h2>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {details.moodTags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-zinc-200"
+                      className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground"
                     >
-                      <Sparkles className="h-3 w-3 text-rose-300" />
+                      <Sparkles className="h-3 w-3 text-accent" />
                       {tag}
                     </span>
                   ))}
                   {base?.moods?.map((tag) => (
                     <span
                       key={`m-${tag}`}
-                      className="inline-flex items-center gap-1 rounded-full border border-rose-400/30 bg-rose-400/10 px-3 py-1 text-xs font-semibold text-rose-200"
+                      className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent"
                     >
                       {tag}
                     </span>
@@ -293,12 +293,12 @@ function MoviePage() {
         {similar.length > 0 && (
           <section className="mt-16">
             <div className="flex items-end justify-between">
-              <h2 className="font-display text-3xl tracking-wide text-white">{t("moreLikeThis")}</h2>
+              <h2 className="font-display text-3xl tracking-tight text-foreground">{t("moreLikeThis")}</h2>
               <button
                 onClick={() =>
                   navigate({ to: "/results", search: { q: title } })
                 }
-                className="text-xs uppercase tracking-[0.25em] text-rose-300 hover:text-rose-200"
+                className="text-xs uppercase tracking-[0.25em] text-accent hover:text-accent/80"
               >
                 {t("seeAll")} →
               </button>
