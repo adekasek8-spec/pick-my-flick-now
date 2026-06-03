@@ -98,43 +98,43 @@ function ResultsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,rgba(244,63,94,0.15),transparent_60%),radial-gradient(ellipse_at_bottom_left,rgba(124,58,237,0.18),transparent_55%),#070709] text-zinc-100">
-      <div className="mx-auto max-w-7xl px-5 pb-24 pt-8 sm:pt-12">
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-7xl px-5 pb-24 pt-6 sm:pt-8">
         <div className="flex items-center justify-between gap-3">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-white"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             {t("back")}
           </Link>
-          <LanguageSelector />
+          <LanguageSelector variant="light" />
         </div>
 
-        <header className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <header className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-rose-300">
+            <p className="text-xs uppercase tracking-[0.3em] text-accent">
               {mood ? t("moodSelection") : t("similarTo")}
             </p>
-            <h1 className="mt-3 font-display text-5xl leading-[0.95] text-white sm:text-6xl">
+            <h1 className="mt-3 font-display text-5xl leading-[0.95] text-foreground sm:text-6xl">
               {mood ? (
                 <>
-                  <em className="not-italic text-rose-400">{tMood(mood as Mood)}</em> {t("picks")}
+                  <em className="not-italic text-accent">{tMood(mood as Mood)}</em> {t("picks")}
                 </>
               ) : (
                 <>
-                  {t("like")} <em className="not-italic text-rose-400">{q}</em>
+                  {t("like")} <em className="not-italic text-accent">{q}</em>
                 </>
               )}
             </h1>
-            <p className="mt-3 max-w-xl text-sm text-zinc-400">
+            <p className="mt-3 max-w-xl text-sm text-muted-foreground">
               {t("resultsSubtitle")}
             </p>
           </div>
           {!isLoading && movies.length > 0 && (
             <button
               onClick={() => void run(true)}
-              className="inline-flex items-center gap-2 self-start rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition hover:border-rose-400/60 hover:bg-rose-500/15"
+              className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-secondary"
             >
               <RefreshCw className="h-4 w-4" />
               {t("refreshMovies")}
@@ -143,14 +143,14 @@ function ResultsPage() {
         </header>
 
         {isLoading && (
-          <div className="mt-24 flex flex-col items-center gap-3 text-zinc-400">
-            <Loader2 className="h-8 w-8 animate-spin text-rose-400" />
+          <div className="mt-24 flex flex-col items-center gap-3 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-accent" />
             <p className="text-sm">{t("curating")}</p>
           </div>
         )}
 
         {error && !isLoading && (
-          <div className="mx-auto mt-10 max-w-xl rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-center text-sm text-rose-200">
+          <div className="mx-auto mt-10 max-w-xl rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-center text-sm text-destructive">
             {error}
           </div>
         )}
@@ -165,12 +165,12 @@ function ResultsPage() {
 
         {!isLoading && movies.length > 0 && (
           <div className="mt-14 flex flex-col items-center gap-3">
-            <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">
+            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
               {t("alreadySeen")}
             </p>
             <button
               onClick={() => void run(true)}
-              className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-violet-500 px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-[0_10px_40px_rgba(244,63,94,0.4)] transition hover:shadow-[0_15px_50px_rgba(244,63,94,0.55)]"
+              className="group inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-primary-foreground transition hover:bg-primary/90"
             >
               <RefreshCw className="h-4 w-4 transition-transform group-hover:rotate-180" />
               {t("showMoreMovies")}
@@ -179,7 +179,7 @@ function ResultsPage() {
         )}
 
         {!isLoading && !error && movies.length === 0 && (
-          <p className="mt-24 text-center text-sm text-zinc-500">
+          <p className="mt-24 text-center text-sm text-muted-foreground">
             <Film className="mx-auto mb-3 h-6 w-6 opacity-50" />
             {t("noPicks")}
           </p>
