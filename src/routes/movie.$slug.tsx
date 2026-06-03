@@ -98,9 +98,11 @@ function MoviePage() {
   const fallbackPoster = posterDataUrl(title, details?.genre ?? base?.genre ?? "");
   const poster = posterUrl ?? fallbackPoster;
   const heroBg = backdropUrl ?? posterUrl ?? fallbackPoster;
-  const youtubeEmbedSearch = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(
-    `${title} ${year ?? ""} official trailer`,
-  )}`;
+  const youtubeEmbedSrc = trailerKey
+    ? `https://www.youtube-nocookie.com/embed/${trailerKey}?rel=0&modestbranding=1`
+    : `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(
+        `${title} ${year ?? ""} official trailer`,
+      )}`;
 
   const handleSave = () => {
     const movie: Movie =
