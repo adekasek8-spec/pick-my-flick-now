@@ -122,18 +122,21 @@ function MoviePage() {
       <div className="relative">
         <div
           className="absolute inset-0 h-[520px] bg-cover bg-center opacity-40 blur-2xl"
-          style={{ backgroundImage: `url(${poster})` }}
+          style={{ backgroundImage: `url(${heroBg})` }}
         />
         <div className="absolute inset-0 h-[520px] bg-gradient-to-b from-black/40 via-[#070709]/85 to-[#070709]" />
 
         <div className="relative mx-auto max-w-6xl px-5 pt-8">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-sm text-zinc-300 transition hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Link>
+          <div className="flex items-center justify-between gap-3">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-sm text-zinc-300 transition hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t("back")}
+            </Link>
+            <LanguageSelector />
+          </div>
 
           <div className="mt-8 grid gap-8 md:grid-cols-[260px_1fr] md:gap-10">
             <div className="mx-auto w-44 md:mx-0 md:w-full">
@@ -172,13 +175,13 @@ function MoviePage() {
 
               {base?.reason && (
                 <div className="mt-5 max-w-2xl border-l-2 border-rose-400/70 bg-rose-400/5 px-4 py-3 text-sm text-zinc-200">
-                  <span className="font-semibold uppercase tracking-wider text-rose-300">Why · </span>
+                  <span className="font-semibold uppercase tracking-wider text-rose-300">{t("why")} · </span>
                   {base.reason}
                 </div>
               )}
 
               <p className="mt-6 max-w-2xl text-base leading-relaxed text-zinc-300">
-                {details?.plot ?? base?.description ?? "Loading plot…"}
+                {details?.plot ?? base?.description ?? t("loadingDetails")}
               </p>
 
               <div className="mt-7 flex flex-wrap gap-3">
@@ -191,7 +194,7 @@ function MoviePage() {
                   className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-violet-500 px-6 py-3 text-sm font-bold text-white shadow-[0_10px_30px_rgba(244,63,94,0.4)] transition hover:shadow-[0_15px_40px_rgba(244,63,94,0.55)]"
                 >
                   <Play className="h-4 w-4 fill-current" />
-                  Watch trailer
+                  {t("watchTrailer")}
                 </a>
                 <button
                   onClick={handleSave}
@@ -202,7 +205,7 @@ function MoviePage() {
                   }`}
                 >
                   {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-                  {saved ? "In watchlist" : "Save to watchlist"}
+                  {saved ? t("inWatchlist") : t("saveToWatchlist")}
                 </button>
               </div>
             </div>
@@ -214,7 +217,7 @@ function MoviePage() {
         {loading && (
           <div className="mt-12 flex items-center justify-center gap-2 text-zinc-400">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm">Loading details…</span>
+            <span className="text-sm">{t("loadingDetails")}</span>
           </div>
         )}
 
@@ -228,7 +231,7 @@ function MoviePage() {
           <>
             {/* Trailer embed */}
             <section className="mt-14">
-              <h2 className="font-display text-2xl tracking-wide text-white">Trailer</h2>
+              <h2 className="font-display text-2xl tracking-wide text-white">{t("trailer")}</h2>
               <div className="mt-4 aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_15px_50px_rgba(0,0,0,0.6)]">
                 <iframe
                   src={youtubeEmbedSearch}
@@ -243,41 +246,41 @@ function MoviePage() {
             {/* Cast + meta */}
             <section className="mt-14 grid gap-10 md:grid-cols-2">
               <div>
-                <h2 className="font-display text-2xl tracking-wide text-white">Cast & crew</h2>
+                <h2 className="font-display text-2xl tracking-wide text-white">{t("castCrew")}</h2>
                 <dl className="mt-4 space-y-2 text-sm">
                   <div className="flex gap-2">
-                    <dt className="w-24 text-zinc-500">Director</dt>
+                    <dt className="w-24 text-zinc-500">{t("director")}</dt>
                     <dd className="text-zinc-200">{details.director}</dd>
                   </div>
                   <div className="flex gap-2">
-                    <dt className="w-24 text-zinc-500">Starring</dt>
+                    <dt className="w-24 text-zinc-500">{t("starring")}</dt>
                     <dd className="text-zinc-200">{details.actors.join(", ")}</dd>
                   </div>
                   <div className="flex gap-2">
-                    <dt className="w-24 text-zinc-500">Genre</dt>
+                    <dt className="w-24 text-zinc-500">{t("genre")}</dt>
                     <dd className="text-zinc-200">{details.genre}</dd>
                   </div>
                 </dl>
               </div>
 
               <div>
-                <h2 className="font-display text-2xl tracking-wide text-white">Mood tags</h2>
+                <h2 className="font-display text-2xl tracking-wide text-white">{t("moodTags")}</h2>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {details.moodTags.map((t) => (
+                  {details.moodTags.map((tag) => (
                     <span
-                      key={t}
+                      key={tag}
                       className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-zinc-200"
                     >
                       <Sparkles className="h-3 w-3 text-rose-300" />
-                      {t}
+                      {tag}
                     </span>
                   ))}
-                  {base?.moods?.map((t) => (
+                  {base?.moods?.map((tag) => (
                     <span
-                      key={`m-${t}`}
+                      key={`m-${tag}`}
                       className="inline-flex items-center gap-1 rounded-full border border-rose-400/30 bg-rose-400/10 px-3 py-1 text-xs font-semibold text-rose-200"
                     >
-                      {t}
+                      {tag}
                     </span>
                   ))}
                 </div>
@@ -290,14 +293,14 @@ function MoviePage() {
         {similar.length > 0 && (
           <section className="mt-16">
             <div className="flex items-end justify-between">
-              <h2 className="font-display text-3xl tracking-wide text-white">More like this</h2>
+              <h2 className="font-display text-3xl tracking-wide text-white">{t("moreLikeThis")}</h2>
               <button
                 onClick={() =>
                   navigate({ to: "/results", search: { q: title } })
                 }
                 className="text-xs uppercase tracking-[0.25em] text-rose-300 hover:text-rose-200"
               >
-                See all →
+                {t("seeAll")} →
               </button>
             </div>
             <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
