@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Bookmark, BookmarkCheck, Loader2, Play, Star, Sparkles } from "lucide-react";
 import { recommendMovies } from "@/lib/ai-recommend.functions";
 import { getMovieDetails, type MovieDetails } from "@/lib/movie-details.functions";
+import { getPoster } from "@/lib/poster-tmdb.functions";
 import { MovieCard } from "@/components/MovieCard";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { posterDataUrl, slugify } from "@/lib/poster";
 import {
   isInWatchlist,
@@ -12,6 +14,7 @@ import {
   toggleWatchlist,
 } from "@/lib/movie-cache";
 import type { Movie } from "@/lib/movies";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/movie/$slug")({
@@ -29,10 +32,14 @@ function MoviePage() {
   const navigate = useNavigate();
   const fetchDetails = useServerFn(getMovieDetails);
   const fetchAI = useServerFn(recommendMovies);
+  const fetchPoster = useServerFn(getPoster);
+  const { t } = useI18n();
 
   const [base, setBase] = useState<Movie | null>(null);
   const [details, setDetails] = useState<MovieDetails | null>(null);
   const [similar, setSimilar] = useState<Movie[]>([]);
+  const [posterUrl, setPosterUrl] = useState<string | null>(null);
+  const [backdropUrl, setBackdropUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -45,6 +52,16 @@ function MoviePage() {
     const titleGuess = cached?.title ?? slug.replace(/-/g, " ");
     setLoading(true);
     setError(null);
+    setPosterUrl(null);
+    setBackdropUrl(null);
+
+    // Fetch TMDB poster early (independent of AI details)
+    fetchPoster({ data: { title: titleGuess, year: cached?.year } })
+      .then((p) => {
+        setPosterUrl(p.posterUrl);
+        setBackdropUrl(p.backdropUrl);
+      })
+      .catch(() => {});
 
     Promise.all([
       fetchDetails({ data: { title: titleGuess, year: cached?.year } }),
@@ -71,7 +88,9 @@ function MoviePage() {
 
   const title = details?.title ?? base?.title ?? slug.replace(/-/g, " ");
   const year = details?.year ?? base?.year;
-  const poster = posterDataUrl(title, details?.genre ?? base?.genre ?? "");
+  const fallbackPoster = posterDataUrl(title, details?.genre ?? base?.genre ?? "");
+  const poster = posterUrl ?? fallbackPoster;
+  const heroBg = backdropUrl ?? posterUrl ?? fallbackPoster;
   const youtubeEmbedSearch = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(
     `${title} ${year ?? ""} official trailer`,
   )}`;
