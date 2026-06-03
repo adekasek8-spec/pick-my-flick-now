@@ -166,14 +166,14 @@ function ResultsPage() {
         {!isLoading && movies.length > 0 && (
           <div className="mt-14 flex flex-col items-center gap-3">
             <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">
-              Already seen these?
+              {t("alreadySeen")}
             </p>
             <button
               onClick={() => void run(true)}
               className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-violet-500 px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-[0_10px_40px_rgba(244,63,94,0.4)] transition hover:shadow-[0_15px_50px_rgba(244,63,94,0.55)]"
             >
               <RefreshCw className="h-4 w-4 transition-transform group-hover:rotate-180" />
-              Show more movies
+              {t("showMoreMovies")}
             </button>
           </div>
         )}
@@ -181,7 +181,7 @@ function ResultsPage() {
         {!isLoading && !error && movies.length === 0 && (
           <p className="mt-24 text-center text-sm text-zinc-500">
             <Film className="mx-auto mb-3 h-6 w-6 opacity-50" />
-            No picks yet — head back home to choose a mood or search.
+            {t("noPicks")}
           </p>
         )}
       </div>
