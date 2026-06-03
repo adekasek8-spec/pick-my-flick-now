@@ -240,7 +240,12 @@ Higher score = appears first.`;
     try {
       parsed = JSON.parse(argsRaw);
     } catch {
-      throw new Error("AI returned invalid data.");
+      console.warn("AI returned invalid recommendation JSON; using curated fallback.");
+      parsed = { movies: fallbackRecommendations(mood, count) };
+    }
+
+    if (!parsed.movies?.length) {
+      parsed = { movies: fallbackRecommendations(mood, count) };
     }
 
     const movies: AIMovie[] = (parsed.movies ?? [])
