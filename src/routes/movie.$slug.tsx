@@ -56,6 +56,7 @@ function MoviePage() {
     setError(null);
     setPosterUrl(null);
     setBackdropUrl(null);
+    setTrailerKey(null);
 
     // Fetch TMDB poster early (independent of AI details)
     fetchPoster({ data: { title: titleGuess, year: cached?.year } })
@@ -63,6 +64,10 @@ function MoviePage() {
         setPosterUrl(p.posterUrl);
         setBackdropUrl(p.backdropUrl);
       })
+      .catch(() => {});
+
+    fetchTrailer({ data: { title: titleGuess, year: cached?.year } })
+      .then((t) => setTrailerKey(t.youtubeKey))
       .catch(() => {});
 
     Promise.all([
