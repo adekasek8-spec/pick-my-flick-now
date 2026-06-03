@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useI18n } from "@/lib/i18n/I18nProvider";
+import { SocialAuthButtons } from "@/components/SocialAuthButtons";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -92,6 +93,8 @@ function LoginPage() {
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             {t("signIn")}
           </button>
+
+          <SocialAuthButtons />
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t("noAccount")}{" "}
