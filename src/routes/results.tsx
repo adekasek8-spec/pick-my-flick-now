@@ -5,10 +5,12 @@ import { ArrowLeft, Loader2, RefreshCw, Film } from "lucide-react";
 import { z } from "zod";
 import { recommendMovies } from "@/lib/ai-recommend.functions";
 import { MovieCard } from "@/components/MovieCard";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import type { Mood, Movie } from "@/lib/movies";
 import { loadPreferences } from "@/lib/preferences";
 import { readResults, saveResults } from "@/lib/movie-cache";
 import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 
 const SearchSchema = z.object({
   mood: z.string().optional(),
@@ -29,6 +31,7 @@ export const Route = createFileRoute("/results")({
 function ResultsPage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { t, tMood } = useI18n();
   const { mood, q } = Route.useSearch();
   const fetchAI = useServerFn(recommendMovies);
 
@@ -97,32 +100,35 @@ function ResultsPage() {
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,rgba(244,63,94,0.15),transparent_60%),radial-gradient(ellipse_at_bottom_left,rgba(124,58,237,0.18),transparent_55%),#070709] text-zinc-100">
       <div className="mx-auto max-w-7xl px-5 pb-24 pt-8 sm:pt-12">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to home
-        </Link>
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t("back")}
+          </Link>
+          <LanguageSelector />
+        </div>
 
         <header className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-rose-300">
-              {mood ? "Mood selection" : "Similar to"}
+              {mood ? t("moodSelection") : t("similarTo")}
             </p>
             <h1 className="mt-3 font-display text-5xl leading-[0.95] text-white sm:text-6xl">
               {mood ? (
                 <>
-                  <em className="not-italic text-rose-400">{mood}</em> picks
+                  <em className="not-italic text-rose-400">{tMood(mood as Mood)}</em> {t("picks")}
                 </>
               ) : (
                 <>
-                  Like <em className="not-italic text-rose-400">{q}</em>
+                  {t("like")} <em className="not-italic text-rose-400">{q}</em>
                 </>
               )}
             </h1>
             <p className="mt-3 max-w-xl text-sm text-zinc-400">
-              AI-curated for your taste. Tap any film for the full breakdown — cast, plot, trailer and more.
+              {t("resultsSubtitle")}
             </p>
           </div>
           {!isLoading && movies.length > 0 && (
@@ -131,7 +137,7 @@ function ResultsPage() {
               className="inline-flex items-center gap-2 self-start rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition hover:border-rose-400/60 hover:bg-rose-500/15"
             >
               <RefreshCw className="h-4 w-4" />
-              Refresh movies
+              {t("refreshMovies")}
             </button>
           )}
         </header>
@@ -139,7 +145,7 @@ function ResultsPage() {
         {isLoading && (
           <div className="mt-24 flex flex-col items-center gap-3 text-zinc-400">
             <Loader2 className="h-8 w-8 animate-spin text-rose-400" />
-            <p className="text-sm">AI is curating fresh picks…</p>
+            <p className="text-sm">{t("curating")}</p>
           </div>
         )}
 
