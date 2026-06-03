@@ -183,7 +183,7 @@ export const getPoster = createServerFn({ method: "POST" })
       if (!final.posterUrl) {
         console.warn(`[poster] no poster for "${data.title}" (cleaned="${cleaned}", year=${data.year ?? "?"})`);
       }
-      cache.set(key, final);
+      if (final.posterUrl) cache.set(key, final);
       return final;
     } catch (err) {
       console.error("[poster] lookup failed:", err);
