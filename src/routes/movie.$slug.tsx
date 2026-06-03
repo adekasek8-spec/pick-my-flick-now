@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Bookmark, BookmarkCheck, Loader2, Play, Star, Sparkles } from "lucide-react";
 import { recommendMovies } from "@/lib/ai-recommend.functions";
 import { getMovieDetails, type MovieDetails } from "@/lib/movie-details.functions";
-import { getPoster } from "@/lib/poster-tmdb.functions";
+import { getPoster, getTrailer } from "@/lib/poster-tmdb.functions";
 import { MovieCard } from "@/components/MovieCard";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { posterDataUrl, slugify } from "@/lib/poster";
