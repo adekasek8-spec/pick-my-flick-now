@@ -27,6 +27,43 @@ function cleanTitle(raw: string): string {
   return t || raw.trim();
 }
 
+async function fetchBestImage(
+  endpoint: "movie" | "tv",
+  id: number,
+  apiKey: string,
+): Promise<{ poster: string | null; backdrop: string | null }> {
+  const url = `https://api.themoviedb.org/3/${endpoint}/${id}/images?api_key=${apiKey}&include_image_language=en,null`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return { poster: null, backdrop: null };
+    const data = (await res.json()) as {
+      posters?: Array<{ file_path: string; vote_average?: number; iso_639_1?: string | null }>;
+      backdrops?: Array<{ file_path: string; vote_average?: number; iso_639_1?: string | null }>;
+    };
+    const pickBest = (
+      arr?: Array<{ file_path: string; vote_average?: number; iso_639_1?: string | null }>,
+    ) => {
+      if (!arr?.length) return null;
+      const en = arr.filter((i) => i.iso_639_1 === "en");
+      const pool = en.length ? en : arr;
+      const sorted = [...pool].sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0));
+      return sorted[0]?.file_path ?? null;
+    };
+    return {
+      poster: (() => {
+        const p = pickBest(data.posters);
+        return p ? `https://image.tmdb.org/t/p/w500${p}` : null;
+      })(),
+      backdrop: (() => {
+        const b = pickBest(data.backdrops);
+        return b ? `https://image.tmdb.org/t/p/w1280${b}` : null;
+      })(),
+    };
+  } catch {
+    return { poster: null, backdrop: null };
+  }
+}
+
 async function searchTmdb(
   endpoint: "movie" | "tv",
   title: string,
@@ -53,10 +90,16 @@ async function searchTmdb(
   };
   const hit = data.results?.find((r) => r.poster_path) ?? data.results?.[0];
   if (!hit) return null;
+
+  const images = await fetchBestImage(endpoint, hit.id, apiKey);
   return {
     tmdbId: hit.id,
-    posterUrl: hit.poster_path ? `https://image.tmdb.org/t/p/w500${hit.poster_path}` : null,
-    backdropUrl: hit.backdrop_path ? `https://image.tmdb.org/t/p/w1280${hit.backdrop_path}` : null,
+    posterUrl:
+      images.poster ??
+      (hit.poster_path ? `https://image.tmdb.org/t/p/w500${hit.poster_path}` : null),
+    backdropUrl:
+      images.backdrop ??
+      (hit.backdrop_path ? `https://image.tmdb.org/t/p/w1280${hit.backdrop_path}` : null),
   };
 }
 
