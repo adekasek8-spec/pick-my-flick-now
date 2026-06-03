@@ -56,15 +56,17 @@ export function LanguageSelector({ variant = "dark" }: { variant?: "dark" | "lig
                 setLang(l.code as Language);
                 setOpen(false);
               }}
-              className={`flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm transition hover:bg-white/5 ${
-                l.code === lang ? "text-white" : ""
-              }`}
+              className={`flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm transition ${
+                variant === "dark" ? "hover:bg-white/5" : "hover:bg-secondary"
+              } ${l.code === lang ? (variant === "dark" ? "text-white" : "text-foreground font-medium") : ""}`}
             >
               <span className="flex items-center gap-2.5">
                 <span className="text-base leading-none">{l.flag}</span>
                 <span>{l.label}</span>
               </span>
-              {l.code === lang && <Check className="h-3.5 w-3.5 text-rose-400" />}
+              {l.code === lang && (
+                <Check className={`h-3.5 w-3.5 ${variant === "dark" ? "text-rose-400" : "text-accent"}`} />
+              )}
             </button>
           ))}
         </div>
