@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Bookmark, BookmarkCheck, Loader2, Play, Star, Sparkles } from "lucide-react";
 import { recommendMovies } from "@/lib/ai-recommend.functions";
 import { getMovieDetails, type MovieDetails } from "@/lib/movie-details.functions";
-import { getPoster } from "@/lib/poster-tmdb.functions";
+import { getPoster, getTrailer } from "@/lib/poster-tmdb.functions";
 import { MovieCard } from "@/components/MovieCard";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { posterDataUrl, slugify } from "@/lib/poster";
@@ -33,6 +33,7 @@ function MoviePage() {
   const fetchDetails = useServerFn(getMovieDetails);
   const fetchAI = useServerFn(recommendMovies);
   const fetchPoster = useServerFn(getPoster);
+  const fetchTrailer = useServerFn(getTrailer);
   const { t } = useI18n();
 
   const [base, setBase] = useState<Movie | null>(null);
@@ -40,6 +41,7 @@ function MoviePage() {
   const [similar, setSimilar] = useState<Movie[]>([]);
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [backdropUrl, setBackdropUrl] = useState<string | null>(null);
+  const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -54,6 +56,7 @@ function MoviePage() {
     setError(null);
     setPosterUrl(null);
     setBackdropUrl(null);
+    setTrailerKey(null);
 
     // Fetch TMDB poster early (independent of AI details)
     fetchPoster({ data: { title: titleGuess, year: cached?.year } })
@@ -61,6 +64,10 @@ function MoviePage() {
         setPosterUrl(p.posterUrl);
         setBackdropUrl(p.backdropUrl);
       })
+      .catch(() => {});
+
+    fetchTrailer({ data: { title: titleGuess, year: cached?.year } })
+      .then((t) => setTrailerKey(t.youtubeKey))
       .catch(() => {});
 
     Promise.all([
@@ -91,9 +98,11 @@ function MoviePage() {
   const fallbackPoster = posterDataUrl(title, details?.genre ?? base?.genre ?? "");
   const poster = posterUrl ?? fallbackPoster;
   const heroBg = backdropUrl ?? posterUrl ?? fallbackPoster;
-  const youtubeEmbedSearch = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(
-    `${title} ${year ?? ""} official trailer`,
-  )}`;
+  const youtubeEmbedSrc = trailerKey
+    ? `https://www.youtube-nocookie.com/embed/${trailerKey}?rel=0&modestbranding=1`
+    : `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(
+        `${title} ${year ?? ""} official trailer`,
+      )}`;
 
   const handleSave = () => {
     const movie: Movie =
@@ -234,7 +243,7 @@ function MoviePage() {
               <h2 className="font-display text-2xl tracking-tight text-foreground">{t("trailer")}</h2>
               <div className="mt-4 aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black shadow-[var(--shadow-card)]">
                 <iframe
-                  src={youtubeEmbedSearch}
+                  src={youtubeEmbedSrc}
                   title={`${title} trailer`}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen

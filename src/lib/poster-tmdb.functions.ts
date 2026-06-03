@@ -190,3 +190,58 @@ export const getPoster = createServerFn({ method: "POST" })
       return empty;
     }
   });
+
+const trailerCache = new Map<string, string | null>();
+
+async function findTrailerKey(
+  endpoint: "movie" | "tv",
+  id: number,
+  apiKey: string,
+): Promise<string | null> {
+  const res = await fetchTmdb(`${endpoint}/${id}/videos`, apiKey, new URLSearchParams({ language: "en-US" }));
+  if (!res.ok) return null;
+  const data = (await res.json()) as {
+    results?: Array<{ key: string; site: string; type: string; official?: boolean; size?: number }>;
+  };
+  const yt = (data.results ?? []).filter((v) => v.site === "YouTube" && v.key);
+  if (!yt.length) return null;
+  const trailer =
+    yt.find((v) => v.type === "Trailer" && v.official) ??
+    yt.find((v) => v.type === "Trailer") ??
+    yt.find((v) => v.type === "Teaser") ??
+    yt[0];
+  return trailer?.key ?? null;
+}
+
+export const getTrailer = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => InputSchema.parse(data))
+  .handler(async ({ data }): Promise<{ youtubeKey: string | null }> => {
+    const cleaned = cleanTitle(data.title);
+    const key = `${cleaned.toLowerCase()}|${data.year ?? ""}`;
+    if (trailerCache.has(key)) return { youtubeKey: trailerCache.get(key) ?? null };
+
+    const apiKey = process.env.TMDB_API_KEY;
+    if (!apiKey) return { youtubeKey: null };
+
+    try {
+      for (const ep of ["movie", "tv"] as const) {
+        const params = new URLSearchParams({ query: cleaned, include_adult: "false", language: "en-US" });
+        if (data.year && ep === "movie") params.set("year", String(data.year));
+        if (data.year && ep === "tv") params.set("first_air_date_year", String(data.year));
+        const res = await fetchTmdb(`search/${ep}`, apiKey, params);
+        if (!res.ok) continue;
+        const json = (await res.json()) as { results?: Array<{ id: number }> };
+        const hit = json.results?.[0];
+        if (!hit) continue;
+        const yk = await findTrailerKey(ep, hit.id, apiKey);
+        if (yk) {
+          trailerCache.set(key, yk);
+          return { youtubeKey: yk };
+        }
+      }
+    } catch (err) {
+      console.error("[trailer] lookup failed:", err);
+    }
+    trailerCache.set(key, null);
+    return { youtubeKey: null };
+  });
