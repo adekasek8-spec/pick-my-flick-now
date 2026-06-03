@@ -33,6 +33,7 @@ function MoviePage() {
   const fetchDetails = useServerFn(getMovieDetails);
   const fetchAI = useServerFn(recommendMovies);
   const fetchPoster = useServerFn(getPoster);
+  const fetchTrailer = useServerFn(getTrailer);
   const { t } = useI18n();
 
   const [base, setBase] = useState<Movie | null>(null);
