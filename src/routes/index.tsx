@@ -135,19 +135,18 @@ function Index() {
 
       {/* Hero */}
       <header className="text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 text-xs uppercase tracking-[0.25em] text-muted-foreground backdrop-blur">
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
-          AI-powered · Mood Movie Picker
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.25em] text-muted-foreground">
+          <Sparkles className="h-3.5 w-3.5 text-accent" />
+          School IT Camp · AI Movie Picker
         </div>
-        <h1 className="mt-6 font-display text-5xl leading-[0.95] tracking-wide sm:text-7xl">
+        <h1 className="mt-8 font-display text-6xl leading-[0.95] text-foreground sm:text-7xl md:text-[88px]">
           What should you
           <br />
-          <span className="bg-gradient-to-r from-primary via-accent to-[var(--color-gold)] bg-clip-text text-transparent">
-            watch tonight?
-          </span>
+          <em className="not-italic text-accent">watch tonight?</em>
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-          Type a movie you love or pick a mood — AI analyzes its genre, theme, and atmosphere to give you fresh, personal picks every time.
+        <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-[var(--color-graphite)] sm:text-lg">
+          Type a film you love or pick a mood — our AI reads its genre, theme,
+          and atmosphere to hand you fresh picks every single time.
         </p>
       </header>
 

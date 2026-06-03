@@ -3,40 +3,38 @@ import type { Movie } from "@/lib/movies";
 
 export function MovieCard({ movie }: { movie: Movie }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border bg-[var(--gradient-card)] p-6 shadow-[var(--shadow-card)] transition-all duration-500 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[var(--shadow-glow)]">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-
+    <article className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card p-6 shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-[var(--shadow-glow)]">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-2xl tracking-wide text-foreground">
-            {movie.title}
-          </h3>
-          <p className="mt-1 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
             {movie.genre} · {movie.year}
           </p>
+          <h3 className="mt-2 font-display text-3xl leading-[1.05] text-foreground">
+            {movie.title}
+          </h3>
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-[var(--color-gold)]/30 bg-[var(--color-gold)]/10 px-2.5 py-1 text-sm font-semibold text-[var(--color-gold)]">
-          <Star className="h-3.5 w-3.5 fill-current" />
+        <div className="flex shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-secondary px-2.5 py-1 text-xs font-semibold text-foreground">
+          <Star className="h-3 w-3 fill-current" />
           {movie.rating.toFixed(1)}
         </div>
       </div>
 
-      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+      <p className="mt-4 text-sm leading-relaxed text-[var(--color-graphite)]">
         {movie.description}
       </p>
 
       {movie.reason && (
-        <div className="mt-4 rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-xs leading-relaxed text-accent">
-          <span className="font-semibold uppercase tracking-wider opacity-80">Why · </span>
+        <div className="mt-4 border-l-2 border-accent/70 bg-accent/5 px-3 py-2 text-xs leading-relaxed text-[var(--color-ink-soft)]">
+          <span className="font-semibold uppercase tracking-wider text-accent">Why · </span>
           {movie.reason}
         </div>
       )}
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-5 flex flex-wrap gap-1.5">
         {movie.moods.map((mood) => (
           <span
             key={mood}
-            className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-xs font-medium text-primary ring-1 ring-primary/20"
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2.5 py-1 text-[11px] font-medium text-[var(--color-graphite)]"
           >
             <Sparkles className="h-3 w-3" />
             {mood}
@@ -48,11 +46,11 @@ export function MovieCard({ movie }: { movie: Movie }) {
         href={movie.trailerUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-[var(--shadow-glow)]"
+        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-foreground/85"
       >
         <Play className="h-4 w-4 fill-current" />
         Watch trailer
       </a>
-    </div>
+    </article>
   );
 }
