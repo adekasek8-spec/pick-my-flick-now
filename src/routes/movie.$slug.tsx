@@ -41,6 +41,7 @@ function MoviePage() {
   const [similar, setSimilar] = useState<Movie[]>([]);
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [backdropUrl, setBackdropUrl] = useState<string | null>(null);
+  const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
