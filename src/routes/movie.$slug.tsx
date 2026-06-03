@@ -243,7 +243,7 @@ function MoviePage() {
               <h2 className="font-display text-2xl tracking-tight text-foreground">{t("trailer")}</h2>
               <div className="mt-4 aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black shadow-[var(--shadow-card)]">
                 <iframe
-                  src={youtubeEmbedSearch}
+                  src={youtubeEmbedSrc}
                   title={`${title} trailer`}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
