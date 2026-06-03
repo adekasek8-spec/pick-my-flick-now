@@ -1,11 +1,12 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif&display=swap");
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-display: "Bebas Neue", system-ui, sans-serif;
+  --font-display: "Instrument Serif", "Inter", system-ui, serif;
   --font-sans: "Inter", system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -32,41 +33,52 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-gold: var(--gold);
-  --gradient-hero: radial-gradient(ellipse at top, oklch(0.32 0.12 295 / 0.45), transparent 60%), radial-gradient(ellipse at bottom right, oklch(0.4 0.18 25 / 0.25), transparent 60%);
-  --gradient-card: linear-gradient(145deg, oklch(0.18 0.02 280 / 0.9), oklch(0.12 0.015 280 / 0.95));
-  --shadow-glow: 0 20px 60px -20px oklch(0.5 0.25 295 / 0.5);
-  --shadow-card: 0 10px 40px -15px oklch(0 0 0 / 0.6);
+  --color-ink-soft: var(--ink-soft);
+  --color-graphite: var(--graphite);
+  --color-slate-soft: var(--slate-soft);
+  --color-hairline: var(--hairline);
+  --gradient-hero: radial-gradient(ellipse at top, oklch(0.92 0.04 265 / 0.5), transparent 65%), radial-gradient(ellipse at bottom right, oklch(0.94 0.05 50 / 0.35), transparent 60%);
+  --gradient-card: linear-gradient(180deg, oklch(1 0 0), oklch(0.985 0.003 280));
+  --shadow-glow: 0 14px 50px -18px oklch(0.45 0.18 265 / 0.35);
+  --shadow-card: 0 1px 0 0 oklch(0 0 0 / 0.04), 0 12px 32px -20px oklch(0 0 0 / 0.18);
 }
 
 :root {
-  --radius: 0.875rem;
-  --background: oklch(0.13 0.02 280);
-  --foreground: oklch(0.97 0.005 280);
-  --card: oklch(0.17 0.02 280);
-  --card-foreground: oklch(0.97 0.005 280);
-  --popover: oklch(0.17 0.02 280);
-  --popover-foreground: oklch(0.97 0.005 280);
-  --primary: oklch(0.65 0.22 300);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.22 0.03 280);
-  --secondary-foreground: oklch(0.97 0.005 280);
-  --muted: oklch(0.22 0.03 280);
-  --muted-foreground: oklch(0.7 0.02 280);
-  --accent: oklch(0.7 0.2 25);
-  --accent-foreground: oklch(0.99 0 0);
-  --destructive: oklch(0.6 0.24 27);
-  --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(1 0 0 / 0.08);
-  --input: oklch(1 0 0 / 0.1);
-  --ring: oklch(0.65 0.22 300);
-  --gold: oklch(0.82 0.16 85);
-}
+  --radius: 0.5rem;
+  /* Runway-inspired editorial light theme */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.16 0.01 270);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0.01 270);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0.01 270);
+  /* Primary = pure black pill (Runway signature) */
+  --primary: oklch(0.16 0.01 270);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.96 0.005 270);
+  --secondary-foreground: oklch(0.2 0.01 270);
+  --muted: oklch(0.965 0.005 270);
+  --muted-foreground: oklch(0.48 0.015 265);
+  /* Accent = friendly indigo for the school-camp vibe (used sparingly) */
+  --accent: oklch(0.55 0.21 265);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.6 0.22 27);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.92 0.006 270);
+  --input: oklch(0.94 0.006 270);
+  --ring: oklch(0.55 0.21 265);
+  --gold: oklch(0.72 0.16 70);
 
-.dark { color-scheme: dark; }
+  /* Runway neutral ladder */
+  --ink-soft: oklch(0.22 0.01 270);
+  --graphite: oklch(0.36 0.01 270);
+  --slate-soft: oklch(0.55 0.02 265);
+  --hairline: oklch(0.92 0.006 270);
+}
 
 @layer base {
   * { border-color: var(--color-border); }
-  html { color-scheme: dark; }
+  html { color-scheme: light; }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -74,5 +86,8 @@
     background-image: var(--gradient-hero);
     background-attachment: fixed;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.005em;
   }
+  h1, h2, h3 { letter-spacing: -0.025em; }
 }
