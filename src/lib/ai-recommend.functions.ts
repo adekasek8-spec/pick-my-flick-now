@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { generateGeminiJson } from "./gemini.server";
 
 const MOODS = [
   "Happy", "Sad", "Calm", "Motivated",
@@ -58,9 +59,6 @@ function fallbackRecommendations(mood: string | null | undefined, count: number)
 export const recommendMovies = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }): Promise<{ movies: AIMovie[] }> => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
-
     const { mood, query, count, preferences, excludeTitles } = data;
     const prefs = preferences ?? {
       favoriteGenres: [],
@@ -149,96 +147,43 @@ Scoring guidance (internal):
 - Matches user's favorite genres or language: +2
 Higher score = appears first.`;
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          temperature: 0.95,
-          top_p: 0.95,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          tools: [
-            {
-              type: "function",
-              function: {
-                name: "return_recommendations",
-                description: "Return scored movie recommendations with reasons.",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    movies: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          title: { type: "string" },
-                          genre: { type: "string", description: "e.g. 'Sci-Fi / Drama'" },
-                          description: { type: "string", description: "One vivid sentence, max 140 chars." },
-                          moods: {
-                            type: "array",
-                            items: { type: "string", enum: MOODS as unknown as string[] },
-                            description: "1-3 matching moods.",
-                          },
-                          rating: { type: "number", description: "IMDb-style 0-10" },
-                          year: { type: "number" },
-                          keywords: {
-                            type: "array",
-                            items: { type: "string" },
-                            description: "5-8 tags: genre, mood, theme, style.",
-                          },
-                          reason: {
-                            type: "string",
-                            description: "One short sentence explaining why it's recommended for THIS user. e.g. 'Recommended because you like superhero action movies.'",
-                          },
-                          score: { type: "number", description: "0-10 match strength." },
-                        },
-                        required: ["title", "genre", "description", "moods", "rating", "year", "keywords", "reason", "score"],
-                        additionalProperties: false,
-                      },
-                    },
-                  },
-                  required: ["movies"],
-                  additionalProperties: false,
-                },
-              },
-            },
-          ],
-          tool_choice: { type: "function", function: { name: "return_recommendations" } },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      if (response.status === 429) throw new Error("Too many requests right now. Please try again in a moment.");
-      if (response.status === 402) throw new Error("AI usage limit reached. Please add credits to your Lovable workspace.");
-      const text = await response.text();
-      console.error("AI gateway error:", response.status, text);
-      throw new Error("AI recommendation failed. Please try again.");
-    }
-
-    const payload = await response.json();
-    const message = payload?.choices?.[0]?.message;
-    const argsRaw = message?.tool_calls?.[0]?.function?.arguments ?? message?.content;
-    if (!argsRaw) {
-      console.warn("AI returned no recommendation payload; using curated fallback.");
-      return { movies: fallbackRecommendations(mood, count).map((m, i) => ({
-        ...m,
-        id: `fallback-${Date.now()}-${i}`,
-        trailerUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${m.title} ${m.year} trailer`)}`,
-      })) };
-    }
-
     let parsed: { movies: Omit<AIMovie, "id" | "trailerUrl">[] };
     try {
-      parsed = JSON.parse(argsRaw);
+      parsed = await generateGeminiJson({
+        systemInstruction: systemPrompt,
+        prompt: userPrompt,
+        temperature: 0.95,
+        schema: {
+          type: "object",
+          properties: {
+            movies: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  genre: { type: "string" },
+                  description: { type: "string" },
+                  moods: {
+                    type: "array",
+                    items: { type: "string", enum: MOODS as unknown as string[] },
+                  },
+                  rating: { type: "number" },
+                  year: { type: "number" },
+                  keywords: {
+                    type: "array",
+                    items: { type: "string" },
+                  },
+                  reason: { type: "string" },
+                  score: { type: "number" },
+                },
+                required: ["title", "genre", "description", "moods", "rating", "year", "keywords", "reason", "score"],
+              },
+            },
+          },
+          required: ["movies"],
+        },
+      });
     } catch {
       console.warn("AI returned invalid recommendation JSON; using curated fallback.");
       parsed = { movies: fallbackRecommendations(mood, count) };

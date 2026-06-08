@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+
+node_modules
+dist
+dist-ssr
+.output
+.vinxi
+.tanstack
+.nitro
+
+.DS_Store
+*.log
