@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { SocialAuthButtons } from "@/components/SocialAuthButtons";
+import { getAuthRedirectUrl } from "@/lib/auth-redirect";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -25,6 +26,7 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/" });
@@ -41,6 +43,31 @@ function LoginPage() {
     }
     toast.success(t("welcomeBack") + "!");
     navigate({ to: "/" });
+  };
+
+  const onResendConfirmation = async () => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      toast.error("Enter your email first.");
+      return;
+    }
+
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: trimmedEmail,
+      options: {
+        emailRedirectTo: getAuthRedirectUrl(),
+      },
+    });
+    setResending(false);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    toast.success("Confirmation email sent. Check your inbox and spam folder.");
   };
 
   return (
@@ -92,6 +119,16 @@ function LoginPage() {
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             {t("signIn")}
+          </button>
+
+          <button
+            type="button"
+            onClick={onResendConfirmation}
+            disabled={resending}
+            className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/40 text-xs font-semibold text-foreground transition hover:bg-secondary disabled:opacity-60"
+          >
+            {resending && <Loader2 className="h-4 w-4 animate-spin" />}
+            Resend confirmation email
           </button>
 
           <SocialAuthButtons />
