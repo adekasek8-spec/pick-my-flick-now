@@ -29,6 +29,18 @@ The `VITE_` variables are public and are bundled into the browser. Never create 
 
 The local `.env` file contains local development values. It is intentionally ignored by Git and Vercel uploads.
 
+## Supabase Auth Redirects
+
+After deploying to Vercel, open Supabase Dashboard -> Authentication -> URL Configuration:
+
+- Site URL: your production Vercel URL, for example `https://your-app.vercel.app`
+- Redirect URLs:
+  - `https://your-app.vercel.app/*`
+  - `http://localhost:3000/*`
+  - any Vercel preview URL pattern you use, for example `https://your-app-git-*.vercel.app/*`
+
+For Google or Apple login, also enable the provider in Supabase Dashboard -> Authentication -> Providers. The app uses Supabase OAuth directly on Vercel.
+
 ## Database
 
 Run the SQL in `supabase/migrations/20260602051434_a8793c3b-a388-4509-af5d-8dfdaf3066ae.sql` against the Supabase project referenced by `SUPABASE_URL`. With the Supabase CLI:

@@ -35,6 +35,8 @@ This project is a TanStack Start / Nitro SSR app deployed on Vercel.
 - `VITE_SUPABASE_PROJECT_ID` is the project ref exposed to the browser.
 - `SUPABASE_SERVICE_ROLE_KEY` is secret and server-only. Never create `VITE_SUPABASE_SERVICE_ROLE_KEY`.
 - Do not require `SUPABASE_SERVICE_ROLE_KEY` unless backend admin actions must bypass RLS. Current app code uses RLS/public client paths and does not import the service-role client.
+- After deploying to Vercel, Supabase Authentication URL Configuration must include the production Vercel URL as Site URL and allow the production, preview, and localhost redirect URLs.
+- Social login should use Supabase OAuth directly on Vercel, not Lovable Cloud Auth.
 
 ## Database Migrations
 

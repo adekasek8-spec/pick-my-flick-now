@@ -1,21 +1,24 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { lovable } from "@/integrations/lovable";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SocialAuthButtons({ dividerLabel = "or continue with" }: { dividerLabel?: string }) {
   const [loading, setLoading] = useState<"google" | "apple" | null>(null);
 
   const onClick = async (provider: "google" | "apple") => {
     setLoading(provider);
-    const result = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: window.location.origin,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
     });
-    if (result.error) {
+    if (error) {
       setLoading(null);
-      toast.error(result.error.message || "Sign in failed");
+      toast.error(error.message || "Sign in failed");
     }
-    // If redirected, browser leaves the page.
+    // If successful, Supabase redirects the browser to the provider.
   };
 
   return (
