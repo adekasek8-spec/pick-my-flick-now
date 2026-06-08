@@ -33,6 +33,7 @@ This project is a TanStack Start / Nitro SSR app deployed on Vercel.
 - `VITE_SUPABASE_URL` is the same base project URL exposed to the browser.
 - `VITE_SUPABASE_PUBLISHABLE_KEY` is the same anon/public key exposed to the browser.
 - `VITE_SUPABASE_PROJECT_ID` is the project ref exposed to the browser.
+- `VITE_AUTH_REDIRECT_URL` is the public app URL used for email confirmation and OAuth redirects; on production Vercel use `https://pick-my-flick-now.vercel.app/`.
 - `SUPABASE_SERVICE_ROLE_KEY` is secret and server-only. Never create `VITE_SUPABASE_SERVICE_ROLE_KEY`.
 - Do not require `SUPABASE_SERVICE_ROLE_KEY` unless backend admin actions must bypass RLS. Current app code uses RLS/public client paths and does not import the service-role client.
 - After deploying to Vercel, Supabase Authentication URL Configuration must include the production Vercel URL as Site URL and allow the production, preview, and localhost redirect URLs.

@@ -3,5 +3,8 @@
   "framework": "tanstack-start",
   "installCommand": "npm install",
   "buildCommand": "npm run build",
-  "devCommand": "npm run dev"
+  "devCommand": "npm run dev",
+  "env": {
+    "VITE_AUTH_REDIRECT_URL": "https://pick-my-flick-now.vercel.app/"
+  }
 }

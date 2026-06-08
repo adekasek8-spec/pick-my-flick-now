@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthRedirectUrl } from "@/lib/auth-redirect";
 
 const enabledProviders = {
   google: import.meta.env.VITE_ENABLE_GOOGLE_AUTH === "true",
@@ -20,7 +21,7 @@ export function SocialAuthButtons({ dividerLabel = "or continue with" }: { divid
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: getAuthRedirectUrl(),
       },
     });
     if (error) {

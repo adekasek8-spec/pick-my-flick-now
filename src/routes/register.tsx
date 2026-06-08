@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { SocialAuthButtons } from "@/components/SocialAuthButtons";
+import { getAuthRedirectUrl } from "@/lib/auth-redirect";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -83,7 +84,7 @@ function RegisterPage() {
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: getAuthRedirectUrl(),
         data: {
           full_name: parsed.data.fullName,
           username: parsed.data.username,

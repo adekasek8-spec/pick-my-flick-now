@@ -18,6 +18,7 @@ SUPABASE_PUBLISHABLE_KEY
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 VITE_SUPABASE_PROJECT_ID
+VITE_AUTH_REDIRECT_URL
 VITE_ENABLE_GOOGLE_AUTH
 VITE_ENABLE_APPLE_AUTH
 GEMINI_API_KEY
@@ -38,8 +39,11 @@ After deploying to Vercel, open Supabase Dashboard -> Authentication -> URL Conf
 - Site URL: your production Vercel URL, for example `https://your-app.vercel.app`
 - Redirect URLs:
   - `https://your-app.vercel.app/*`
+  - `https://your-app.vercel.app/`
   - `http://localhost:3000/*`
   - any Vercel preview URL pattern you use, for example `https://your-app-git-*.vercel.app/*`
+
+For this project, set `VITE_AUTH_REDIRECT_URL=https://pick-my-flick-now.vercel.app/` in Vercel and set Supabase Site URL to `https://pick-my-flick-now.vercel.app`.
 
 For Google or Apple login, also enable the provider in Supabase Dashboard -> Authentication -> Providers. The app uses Supabase OAuth directly on Vercel.
 
