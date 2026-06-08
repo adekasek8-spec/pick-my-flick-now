@@ -37,6 +37,7 @@ This project is a TanStack Start / Nitro SSR app deployed on Vercel.
 - Do not require `SUPABASE_SERVICE_ROLE_KEY` unless backend admin actions must bypass RLS. Current app code uses RLS/public client paths and does not import the service-role client.
 - After deploying to Vercel, Supabase Authentication URL Configuration must include the production Vercel URL as Site URL and allow the production, preview, and localhost redirect URLs.
 - Social login should use Supabase OAuth directly on Vercel, not Lovable Cloud Auth.
+- Keep social login buttons behind `VITE_ENABLE_GOOGLE_AUTH` and `VITE_ENABLE_APPLE_AUTH`; only set them to `true` when the matching Supabase provider is enabled.
 
 ## Database Migrations
 

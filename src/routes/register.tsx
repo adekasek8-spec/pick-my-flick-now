@@ -67,15 +67,19 @@ function RegisterPage() {
 
     setSubmitting(true);
 
-    // Check username uniqueness
-    const { data: taken } = await supabase.rpc("username_exists", { _username: parsed.data.username });
+    const { data: taken, error: usernameError } = await supabase.rpc("username_exists", {
+      _username: parsed.data.username,
+    });
+    if (usernameError) {
+      console.warn("Username uniqueness check unavailable:", usernameError.message);
+    }
     if (taken) {
       setErrors({ username: "Username is already taken" });
       setSubmitting(false);
       return;
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
@@ -94,8 +98,14 @@ function RegisterPage() {
       return;
     }
 
-    toast.success("Welcome to Mood Movie Picker! Your account has been created successfully.");
-    navigate({ to: "/" });
+    if (signUpData.session) {
+      toast.success("Welcome to Mood Movie Picker! Your account has been created successfully.");
+      navigate({ to: "/" });
+      return;
+    }
+
+    toast.success("Account created. Please check your email to confirm your sign up.");
+    navigate({ to: "/login" });
   };
 
   return (

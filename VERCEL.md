@@ -18,6 +18,8 @@ SUPABASE_PUBLISHABLE_KEY
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 VITE_SUPABASE_PROJECT_ID
+VITE_ENABLE_GOOGLE_AUTH
+VITE_ENABLE_APPLE_AUTH
 GEMINI_API_KEY
 GEMINI_MODEL
 TMDB_API_KEY
@@ -40,6 +42,8 @@ After deploying to Vercel, open Supabase Dashboard -> Authentication -> URL Conf
   - any Vercel preview URL pattern you use, for example `https://your-app-git-*.vercel.app/*`
 
 For Google or Apple login, also enable the provider in Supabase Dashboard -> Authentication -> Providers. The app uses Supabase OAuth directly on Vercel.
+
+Keep `VITE_ENABLE_GOOGLE_AUTH=false` and `VITE_ENABLE_APPLE_AUTH=false` until those providers are enabled in Supabase. Set one to `true` only after the provider works; otherwise Supabase returns `Unsupported provider: provider is not enabled`.
 
 ## Database
 

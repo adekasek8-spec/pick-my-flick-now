@@ -3,8 +3,17 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+const enabledProviders = {
+  google: import.meta.env.VITE_ENABLE_GOOGLE_AUTH === "true",
+  apple: import.meta.env.VITE_ENABLE_APPLE_AUTH === "true",
+};
+
 export function SocialAuthButtons({ dividerLabel = "or continue with" }: { dividerLabel?: string }) {
   const [loading, setLoading] = useState<"google" | "apple" | null>(null);
+  const showGoogle = enabledProviders.google;
+  const showApple = enabledProviders.apple;
+
+  if (!showGoogle && !showApple) return null;
 
   const onClick = async (provider: "google" | "apple") => {
     setLoading(provider);
@@ -29,33 +38,37 @@ export function SocialAuthButtons({ dividerLabel = "or continue with" }: { divid
           {dividerLabel}
         </span>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => onClick("google")}
-          disabled={loading !== null}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background text-sm font-medium text-foreground transition hover:bg-secondary disabled:opacity-60"
-        >
-          {loading === "google" ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <GoogleIcon />
-          )}
-          Google
-        </button>
-        <button
-          type="button"
-          onClick={() => onClick("apple")}
-          disabled={loading !== null}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-foreground text-sm font-medium text-background transition hover:bg-foreground/90 disabled:opacity-60"
-        >
-          {loading === "apple" ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <AppleIcon />
-          )}
-          Apple
-        </button>
+      <div className={`mt-4 grid gap-3 ${showGoogle && showApple ? "grid-cols-2" : "grid-cols-1"}`}>
+        {showGoogle && (
+          <button
+            type="button"
+            onClick={() => onClick("google")}
+            disabled={loading !== null}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background text-sm font-medium text-foreground transition hover:bg-secondary disabled:opacity-60"
+          >
+            {loading === "google" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <GoogleIcon />
+            )}
+            Google
+          </button>
+        )}
+        {showApple && (
+          <button
+            type="button"
+            onClick={() => onClick("apple")}
+            disabled={loading !== null}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-foreground text-sm font-medium text-background transition hover:bg-foreground/90 disabled:opacity-60"
+          >
+            {loading === "apple" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <AppleIcon />
+            )}
+            Apple
+          </button>
+        )}
       </div>
     </div>
   );
