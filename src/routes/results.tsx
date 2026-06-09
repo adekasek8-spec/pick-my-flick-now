@@ -22,7 +22,10 @@ export const Route = createFileRoute("/results")({
   head: () => ({
     meta: [
       { title: "Your picks — Mood Movie Picker" },
-      { name: "description", content: "AI-curated movie recommendations tailored to your mood or search." },
+      {
+        name: "description",
+        content: "AI-curated movie recommendations tailored to your mood or search.",
+      },
     ],
   }),
   component: ResultsPage,
@@ -41,6 +44,7 @@ function ResultsPage() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [shownTitles, setShownTitles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -57,43 +61,81 @@ function ResultsPage() {
       setShownTitles(cached.shownTitles);
       return;
     }
-    void run(false);
+    void run("initial");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, mood, q]);
 
-  const run = async (refresh: boolean) => {
-    setIsLoading(true);
+  const titleKey = (title: string) => title.trim().toLowerCase();
+
+  const mergeUniqueMovies = (current: Movie[], incoming: Movie[]) => {
+    const seen = new Set(current.map((movie) => titleKey(movie.title)));
+    return [
+      ...current,
+      ...incoming.filter((movie) => {
+        const title = titleKey(movie.title);
+        if (!title || seen.has(title)) return false;
+        seen.add(title);
+        return true;
+      }),
+    ];
+  };
+
+  const run = async (mode: "initial" | "refresh" | "append") => {
+    if (mode === "append") {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+    }
     setError(null);
     try {
       const prefs = loadPreferences();
-      const res = await fetchAI({
-        data: {
-          mood: (mood as Mood) ?? null,
-          query: q ?? "",
-          count: 8,
-          preferences: prefs,
-          seed: Math.floor(Math.random() * 1_000_000),
-          excludeTitles: refresh ? shownTitles : [],
-        },
-      });
-      const list = res.movies as unknown as Movie[];
-      setMovies(list);
+      const currentTitles = movies.map((movie) => movie.title);
+      const baseExcludeTitles =
+        mode === "initial" ? [] : Array.from(new Set([...shownTitles, ...currentTitles]));
+      let excludeTitles = baseExcludeTitles;
+      let list: Movie[] = [];
+
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const res = await fetchAI({
+          data: {
+            mood: (mood as Mood) ?? null,
+            query: q ?? "",
+            count: 8,
+            preferences: prefs,
+            seed: Math.floor(Math.random() * 1_000_000),
+            excludeTitles,
+          },
+        });
+        list = res.movies as unknown as Movie[];
+        const currentSet = new Set(currentTitles.map(titleKey));
+        const hasFreshMovie = list.some((movie) => !currentSet.has(titleKey(movie.title)));
+        if (mode === "initial" || hasFreshMovie) break;
+        excludeTitles = Array.from(
+          new Set([...excludeTitles, ...list.map((movie) => movie.title)]),
+        );
+      }
+
+      const nextMovies = mode === "append" ? mergeUniqueMovies(movies, list) : list;
+      setMovies(nextMovies);
       const nextShown = Array.from(
-        new Set(refresh ? [...shownTitles, ...list.map((m) => m.title)] : list.map((m) => m.title)),
+        new Set([...shownTitles, ...nextMovies.map((m) => m.title)]),
       ).slice(-60);
       setShownTitles(nextShown);
       saveResults({
         key: cacheKey,
         label,
         kind: mood ? "mood" : "query",
-        movies: list,
+        movies: nextMovies,
         shownTitles: nextShown,
       });
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (mode !== "append") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
@@ -127,13 +169,12 @@ function ResultsPage() {
                 </>
               )}
             </h1>
-            <p className="mt-3 max-w-xl text-sm text-muted-foreground">
-              {t("resultsSubtitle")}
-            </p>
+            <p className="mt-3 max-w-xl text-sm text-muted-foreground">{t("resultsSubtitle")}</p>
           </div>
           {!isLoading && movies.length > 0 && (
             <button
-              onClick={() => void run(true)}
+              onClick={() => void run("refresh")}
+              disabled={isLoadingMore}
               className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-secondary"
             >
               <RefreshCw className="h-4 w-4" />
@@ -169,10 +210,15 @@ function ResultsPage() {
               {t("alreadySeen")}
             </p>
             <button
-              onClick={() => void run(true)}
-              className="group inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-primary-foreground transition hover:bg-primary/90"
+              onClick={() => void run("append")}
+              disabled={isLoadingMore}
+              className="group inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              <RefreshCw className="h-4 w-4 transition-transform group-hover:rotate-180" />
+              {isLoadingMore ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 transition-transform group-hover:rotate-180" />
+              )}
               {t("showMoreMovies")}
             </button>
           </div>
