@@ -5,6 +5,7 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "env": {
-    "VITE_AUTH_REDIRECT_URL": "https://pick-my-flick-now.vercel.app/"
+    "VITE_AUTH_REDIRECT_URL": "https://pick-my-flick-now.vercel.app/",
+    "VITE_ENABLE_GOOGLE_AUTH": "true"
   }
 }

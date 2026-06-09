@@ -155,7 +155,7 @@ function RegisterPage() {
             {t("createAccount")}
           </button>
 
-          <SocialAuthButtons dividerLabel="or sign up with" />
+          <SocialAuthButtons dividerLabel="or sign up with" googleLabel="Sign up with Google" />
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t("haveAccount")}{" "}

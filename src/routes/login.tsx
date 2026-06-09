@@ -131,7 +131,7 @@ function LoginPage() {
             Resend confirmation email
           </button>
 
-          <SocialAuthButtons />
+          <SocialAuthButtons googleLabel="Sign up with Google" />
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t("noAccount")}{" "}

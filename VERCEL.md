@@ -47,7 +47,7 @@ For this project, set `VITE_AUTH_REDIRECT_URL=https://pick-my-flick-now.vercel.a
 
 For Google or Apple login, also enable the provider in Supabase Dashboard -> Authentication -> Providers. The app uses Supabase OAuth directly on Vercel.
 
-Keep `VITE_ENABLE_GOOGLE_AUTH=false` and `VITE_ENABLE_APPLE_AUTH=false` until those providers are enabled in Supabase. Set one to `true` only after the provider works; otherwise Supabase returns `Unsupported provider: provider is not enabled`.
+For this project, Google auth is enabled in the app with `VITE_ENABLE_GOOGLE_AUTH=true`. Keep `VITE_ENABLE_APPLE_AUTH=false` until the Apple provider is enabled in Supabase.
 
 ## Database
 

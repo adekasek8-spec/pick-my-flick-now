@@ -5,13 +5,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAuthRedirectUrl } from "@/lib/auth-redirect";
 
 const enabledProviders = {
-  google: import.meta.env.VITE_ENABLE_GOOGLE_AUTH === "true",
   apple: import.meta.env.VITE_ENABLE_APPLE_AUTH === "true",
 };
 
-export function SocialAuthButtons({ dividerLabel = "or continue with" }: { dividerLabel?: string }) {
+export function SocialAuthButtons({
+  dividerLabel = "or continue with",
+  googleLabel = "Continue with Google",
+}: {
+  dividerLabel?: string;
+  googleLabel?: string;
+}) {
   const [loading, setLoading] = useState<"google" | "apple" | null>(null);
-  const showGoogle = enabledProviders.google;
+  const showGoogle = true;
   const showApple = enabledProviders.apple;
 
   if (!showGoogle && !showApple) return null;
@@ -52,7 +57,7 @@ export function SocialAuthButtons({ dividerLabel = "or continue with" }: { divid
             ) : (
               <GoogleIcon />
             )}
-            Google
+            {googleLabel}
           </button>
         )}
         {showApple && (

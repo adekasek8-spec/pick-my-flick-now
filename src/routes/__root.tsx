@@ -95,6 +95,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/62cbff85-df0e-4cc7-9a78-b83ffc557b1d/id-preview-83e0f48e--128aaef4-411c-43b1-a53c-69ab6de91900.lovable.app-1780297907694.png" },
     ],
     links: [
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
@@ -136,4 +138,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

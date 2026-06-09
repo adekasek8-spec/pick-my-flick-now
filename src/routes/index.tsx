@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Search, Film, LogOut, Sparkles, Bookmark, ArrowRight } from "lucide-react";
+import { Search, Film, LogOut, Sparkles, Bookmark, ArrowRight, Mail, MessageCircle } from "lucide-react";
 import { MOODS, type Mood } from "@/lib/movies";
 import { PreferencesDialog } from "@/components/PreferencesDialog";
 import { LanguageSelector } from "@/components/LanguageSelector";
@@ -62,10 +62,26 @@ function Index() {
                 {watchCount} {t("saved")}
               </Link>
             )}
+            <Link
+              to="/chat"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs text-foreground transition hover:bg-secondary"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              AI chat
+            </Link>
             <LanguageSelector variant="light" />
             {user ? (
               <>
                 <PreferencesDialog />
+                {user.email && (
+                  <span
+                    title={user.email}
+                    className="inline-flex max-w-[220px] items-center gap-1.5 truncate rounded-full border border-border bg-secondary px-3 py-1.5 text-xs text-foreground"
+                  >
+                    <Mail className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{user.email}</span>
+                  </span>
+                )}
                 <button
                   onClick={() => signOut()}
                   className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs text-foreground transition hover:bg-secondary"
