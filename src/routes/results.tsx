@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Loader2, RefreshCw, Film } from "lucide-react";
 import { z } from "zod";
 import { recommendMovies } from "@/lib/ai-recommend.functions";
+import { getPoster } from "@/lib/poster-tmdb.functions";
 import { MovieCard } from "@/components/MovieCard";
 import { LanguageSelector } from "@/components/LanguageSelector";
-import type { Mood, Movie } from "@/lib/movies";
+import { findSimilar, MOVIES, type Mood, type Movie } from "@/lib/movies";
 import { loadPreferences } from "@/lib/preferences";
 import { readResults, saveResults } from "@/lib/movie-cache";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,6 +38,7 @@ function ResultsPage() {
   const { t, tMood } = useI18n();
   const { mood, q } = Route.useSearch();
   const fetchAI = useServerFn(recommendMovies);
+  const fetchPoster = useServerFn(getPoster);
 
   const cacheKey = mood ? `mood:${mood}` : q ? `query:${q.toLowerCase()}` : "";
   const label = mood ? `${mood} mood picks` : q ? `Similar to "${q}"` : "Picks";
@@ -57,8 +59,19 @@ function ResultsPage() {
     if (!mood && !q) return;
     const cached = readResults();
     if (cached && cached.key === cacheKey && cached.movies.length) {
-      setMovies(cached.movies);
       setShownTitles(cached.shownTitles);
+      if (cached.movies.every((movie) => movie.posterUrl)) {
+        setMovies(cached.movies);
+        return;
+      }
+      setIsLoading(true);
+      hydrateMoviePosters(cached.movies)
+        .then((hydrated) => {
+          setMovies(hydrated);
+          saveResults({ ...cached, movies: hydrated });
+        })
+        .catch(() => setMovies(cached.movies))
+        .finally(() => setIsLoading(false));
       return;
     }
     void run("initial");
@@ -80,6 +93,59 @@ function ResultsPage() {
     ];
   };
 
+  const uniqueMovieCount = (current: Movie[], incoming: Movie[]) => {
+    const seen = new Set(current.map((movie) => titleKey(movie.title)));
+    return incoming.filter((movie) => {
+      const title = titleKey(movie.title);
+      return title && !seen.has(title);
+    }).length;
+  };
+
+  const hydrateMoviePosters = async (list: Movie[]) => {
+    return Promise.all(
+      list.map(async (movie) => {
+        if (movie.posterUrl) return movie;
+        try {
+          const poster = await fetchPoster({ data: { title: movie.title, year: movie.year } });
+          return {
+            ...movie,
+            posterUrl: poster.posterUrl,
+            backdropUrl: poster.backdropUrl,
+          };
+        } catch {
+          return movie;
+        }
+      }),
+    );
+  };
+
+  const localFillMovies = (excludeTitles: string[], limit: number): Movie[] => {
+    const excluded = new Set(excludeTitles.map(titleKey));
+    const moodMatches = mood
+      ? MOVIES.filter((movie) => movie.moods.includes(mood as Mood))
+      : q
+        ? findSimilar(q, limit * 2)
+        : [];
+    const pool = [...moodMatches, ...MOVIES]
+      .filter(
+        (movie, index, all) =>
+          all.findIndex((item) => titleKey(item.title) === titleKey(movie.title)) === index,
+      )
+      .filter((movie) => !excluded.has(titleKey(movie.title)))
+      .slice(0, limit);
+
+    return pool.map((movie, index) => ({
+      ...movie,
+      id: `local-more-${Date.now()}-${index}-${titleKey(movie.title)}`,
+      reason:
+        movie.reason ??
+        (mood
+          ? `Recommended as another strong ${mood.toLowerCase()} pick.`
+          : "Recommended as another reliable match."),
+      score: movie.score ?? Math.round(movie.rating * 10) / 10,
+    }));
+  };
+
   const run = async (mode: "initial" | "refresh" | "append") => {
     if (mode === "append") {
       setIsLoadingMore(true);
@@ -95,12 +161,12 @@ function ResultsPage() {
       let excludeTitles = baseExcludeTitles;
       let list: Movie[] = [];
 
-      for (let attempt = 0; attempt < 2; attempt += 1) {
+      for (let attempt = 0; attempt < 4; attempt += 1) {
         const res = await fetchAI({
           data: {
             mood: (mood as Mood) ?? null,
             query: q ?? "",
-            count: 8,
+            count: mode === "append" ? 12 : 8,
             preferences: prefs,
             seed: Math.floor(Math.random() * 1_000_000),
             excludeTitles,
@@ -115,7 +181,12 @@ function ResultsPage() {
         );
       }
 
-      const nextMovies = mode === "append" ? mergeUniqueMovies(movies, list) : list;
+      if (mode === "append" && uniqueMovieCount(movies, list) === 0) {
+        list = localFillMovies([...baseExcludeTitles, ...list.map((movie) => movie.title)], 8);
+      }
+
+      const hydratedList = await hydrateMoviePosters(list);
+      const nextMovies = mode === "append" ? mergeUniqueMovies(movies, hydratedList) : hydratedList;
       setMovies(nextMovies);
       const nextShown = Array.from(
         new Set([...shownTitles, ...nextMovies.map((m) => m.title)]),

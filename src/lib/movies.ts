@@ -18,6 +18,8 @@ export interface Movie {
   year: number;
   trailerUrl: string;
   keywords: string[];
+  posterUrl?: string | null;
+  backdropUrl?: string | null;
   reason?: string;
   score?: number;
 }

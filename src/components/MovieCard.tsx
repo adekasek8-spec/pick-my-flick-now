@@ -23,13 +23,22 @@ export function MovieCard({ movie }: { movie: Movie }) {
   const { t } = useI18n();
 
   const cacheKey = `${movie.title}|${movie.year}`;
-  const [poster, setPoster] = useState<string | null>(posterCache.get(cacheKey) ?? null);
-  const [loaded, setLoaded] = useState(false);
+  const initialPoster = movie.posterUrl ?? posterCache.get(cacheKey) ?? null;
+  const [poster, setPoster] = useState<string | null>(initialPoster);
+  const [loaded, setLoaded] = useState(Boolean(initialPoster));
 
   useEffect(() => {
+    if (movie.posterUrl) {
+      posterCache.set(cacheKey, movie.posterUrl);
+      setPoster(movie.posterUrl);
+      setLoaded(true);
+      return;
+    }
+
     setLoaded(false);
     if (posterCache.has(cacheKey)) {
       setPoster(posterCache.get(cacheKey) ?? null);
+      setLoaded(Boolean(posterCache.get(cacheKey)));
       return;
     }
     let cancelled = false;
@@ -47,7 +56,7 @@ export function MovieCard({ movie }: { movie: Movie }) {
     return () => {
       cancelled = true;
     };
-  }, [cacheKey, movie.title, movie.year, fetchPoster]);
+  }, [cacheKey, movie.posterUrl, movie.title, movie.year, fetchPoster]);
 
   const gradient = posterGradient(movie.title);
   const fallbackStyle: React.CSSProperties = {
@@ -72,7 +81,8 @@ export function MovieCard({ movie }: { movie: Movie }) {
           <img
             src={poster}
             alt={`${movie.title} poster`}
-            loading="lazy"
+            loading="eager"
+            fetchPriority="high"
             onLoad={() => setLoaded(true)}
             className={`relative h-full w-full object-cover transition-all duration-500 group-hover:scale-105 ${
               loaded ? "opacity-100" : "opacity-0"
@@ -99,11 +109,15 @@ export function MovieCard({ movie }: { movie: Movie }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-4">
-        <p className="line-clamp-3 text-xs leading-relaxed text-muted-foreground">{movie.description}</p>
+        <p className="line-clamp-3 text-xs leading-relaxed text-muted-foreground">
+          {movie.description}
+        </p>
 
         {movie.reason && (
           <div className="border-l-2 border-accent bg-accent/5 px-3 py-2 text-[11px] leading-relaxed text-foreground">
-            <span className="font-semibold uppercase tracking-wider text-accent">{t("why")} · </span>
+            <span className="font-semibold uppercase tracking-wider text-accent">
+              {t("why")} ·{" "}
+            </span>
             {movie.reason}
           </div>
         )}
