@@ -43,7 +43,6 @@ function MoviePage() {
   const [backdropUrl, setBackdropUrl] = useState<string | null>(null);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -53,7 +52,8 @@ function MoviePage() {
 
     const titleGuess = cached?.title ?? slug.replace(/-/g, " ");
     setLoading(true);
-    setError(null);
+    setDetails(null);
+    setSimilar([]);
     setPosterUrl(null);
     setBackdropUrl(null);
     setTrailerKey(null);
@@ -70,25 +70,41 @@ function MoviePage() {
       .then((t) => setTrailerKey(t.youtubeKey))
       .catch(() => {});
 
-    Promise.all([
-      fetchDetails({ data: { title: titleGuess, year: cached?.year } }),
-      fetchAI({
-        data: {
-          mood: null,
-          query: titleGuess,
-          count: 6,
-          excludeTitles: [titleGuess],
-          seed: Math.floor(Math.random() * 1_000_000),
-        },
-      }),
-    ])
-      .then(([d, r]) => {
-        setDetails(d.details);
-        setSimilar(r.movies as unknown as Movie[]);
+    const detailsRequest = fetchDetails({ data: { title: titleGuess, year: cached?.year } });
+    const similarRequest = fetchAI({
+      data: {
+        mood: null,
+        query: titleGuess,
+        count: 6,
+        excludeTitles: [titleGuess],
+        seed: Math.floor(Math.random() * 1_000_000),
+      },
+    });
+
+    Promise.allSettled([detailsRequest, similarRequest])
+      .then(([detailsResult, similarResult]) => {
+        if (detailsResult.status === "fulfilled") {
+          setDetails(detailsResult.value.details);
+        } else {
+          setDetails({
+            title: titleGuess,
+            year: cached?.year ?? 0,
+            genre: cached?.genre ?? "Film",
+            rating: cached?.rating ?? 0,
+            plot: cached?.description ?? "",
+            actors: [],
+            director: "",
+            moodTags: cached?.moods ?? [],
+            runtime: "",
+            language: "",
+            youtubeQuery: `${titleGuess} ${cached?.year ?? ""} trailer`.trim(),
+          });
+        }
+
+        if (similarResult.status === "fulfilled") {
+          setSimilar(similarResult.value.movies as unknown as Movie[]);
+        }
       })
-      .catch((e) =>
-        setError(e instanceof Error ? e.message : "Could not load this movie."),
-      )
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
@@ -230,28 +246,23 @@ function MoviePage() {
           </div>
         )}
 
-        {error && !loading && (
-          <div className="mx-auto mt-10 max-w-xl rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-center text-sm text-destructive">
-            {error}
-          </div>
+        {!loading && (
+          <section className="mt-14">
+            <h2 className="font-display text-2xl tracking-tight text-foreground">{t("trailer")}</h2>
+            <div className="mt-4 aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black shadow-[var(--shadow-card)]">
+              <iframe
+                src={youtubeEmbedSrc}
+                title={`${title} trailer`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="h-full w-full"
+              />
+            </div>
+          </section>
         )}
 
         {details && !loading && (
           <>
-            {/* Trailer embed */}
-            <section className="mt-14">
-              <h2 className="font-display text-2xl tracking-tight text-foreground">{t("trailer")}</h2>
-              <div className="mt-4 aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black shadow-[var(--shadow-card)]">
-                <iframe
-                  src={youtubeEmbedSrc}
-                  title={`${title} trailer`}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="h-full w-full"
-                />
-              </div>
-            </section>
-
             {/* Cast + meta */}
             <section className="mt-14 grid gap-10 md:grid-cols-2">
               <div>
